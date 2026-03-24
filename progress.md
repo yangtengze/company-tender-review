@@ -98,3 +98,39 @@
     测试库 schema/data 对齐 sys_org 字段
         src/test/resources/schema.sql（补齐 parent_id/status/created_at/updated_at 等）
         src/test/resources/data.sql（初始化 1001 根节点 + 2001 子节点）
+
+已实现：模块三 用户管理 /api/users
+    GET /api/users：用户分页列表（支持 orgId/role/status/keyword/page/size）
+        返回用现有 R.okPage(data,total,page,size) 结构承载 Page<UserListItem>。
+    POST /api/users：创建用户（密码 BCrypt 入库）
+    PUT /api/users/{id}：更新用户信息（含 role/status/avatarUrl）
+    PATCH /api/users/{id}/pwd：修改密码（超管可不传 oldPassword 强制重置他人；自己改密必须传 oldPassword 且校验）
+    超管权限：以上接口都要求 Authorization: Bearer {accessToken}，并且当前登录用户 role=1，否则返回 code=4004（沿用你现有的 GlobalExceptionHandler 映射）。
+关键新增/修改文件
+    src/main/java/.../controller/UserController.java
+    src/main/java/.../dto/request/UserQueryRequest.java
+    src/main/java/.../dto/request/UserCreateRequest.java
+    src/main/java/.../dto/request/UserUpdateRequest.java
+    src/main/java/.../dto/request/ChangePasswordRequest.java
+    src/main/java/.../dto/response/UserListItem.java
+    src/main/java/.../repository/model/UserListRow.java
+    src/main/java/.../repository/UserRepository.java（扩展分页/创建/更新/改密所需方法）
+    src/main/java/.../service/security/PasswordCodec.java（新增 BCrypt + 兼容旧 SHA-256）
+    src/test/java/.../UserControllerTest.java
+    src/test/resources/schema.sql（严格同写法）
+pom.xml（加 spring-security-crypto + Testcontainers 依赖）
+
+我做的修改
+    src/main/java/.../service/security/PasswordCodec.java
+
+        移除 SHA-256 相关实现
+        matches 现在只接受 BCrypt 格式（$2a$/$2b$/$2y$），否则直接报错：
+            "password hash format invalid, bcrypt required"
+    src/test/resources/data.sql
+
+        把 admin 的 password_hash 从 SHA-256 改为 BCrypt 哈希（对应密码仍是 123456）：
+        '$2b$12$8ZrYQOMn/l5/q8gNMchhEuGFolGmF0H0WNEb8fYMwj.bT5l.ViVYq'
+现在的状态
+    登录校验：AuthServiceImpl -> passwordCodec.matches(...)，已变为 BCrypt-only
+    创建用户 / 改密码：UserController 已经是 passwordCodec.bcrypt(...) 入库，保持一致
+    测试初始用户：admin 已是 BCrypt 哈希，和登录流程一致

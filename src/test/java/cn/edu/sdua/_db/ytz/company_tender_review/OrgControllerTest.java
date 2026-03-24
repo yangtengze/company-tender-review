@@ -36,7 +36,7 @@ class OrgControllerTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(2))
                 .andExpect(jsonPath("$.data[0].id").value(1001))
-                .andExpect(jsonPath("$.data[0].parentId").doesNotExist())
+                .andExpect(jsonPath("$.data[0].parentId").isEmpty())
                 .andExpect(jsonPath("$.data[0].typeName").value("审计机构"));
     }
 
