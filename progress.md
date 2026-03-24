@@ -76,3 +76,25 @@
         src/test/resources/application.properties（新增）
         src/test/resources/schema.sql（新增）
         src/test/resources/data.sql（新增）
+
+已实现：模块二 机构管理 /api/orgs
+    GET /api/orgs：支持 type/status/tree 查询
+        默认：status=1、tree=false（平铺列表）
+        tree=true：返回树形结构（含 children）
+    POST /api/orgs：创建机构（会校验 parentId 存在）
+    PUT /api/orgs/{id}：更新机构信息（支持更新 name/code/address/status）
+对应新增/更新文件：
+
+    新增 DTO
+        src/main/java/.../dto/request/OrgQueryRequest.java
+        src/main/java/.../dto/request/OrgCreateRequest.java
+        src/main/java/.../dto/request/OrgUpdateRequest.java
+        src/main/java/.../dto/response/OrgNode.java
+    新增 Controller
+        src/main/java/.../controller/OrgController.java
+    新增 Repository（JDBC）
+        src/main/java/.../repository/OrgRepository.java
+        src/main/java/.../repository/model/OrgRow.java
+    测试库 schema/data 对齐 sys_org 字段
+        src/test/resources/schema.sql（补齐 parent_id/status/created_at/updated_at 等）
+        src/test/resources/data.sql（初始化 1001 根节点 + 2001 子节点）

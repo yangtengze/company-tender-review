@@ -1,4 +1,8 @@
-insert into sys_org (id, name, type) values (1001, '审计局', 1);
+insert into sys_org (id, name, code, type, parent_id, address, status, created_at, updated_at)
+values (1001, '审计局', 'ORG-1001', 1, null, '济南', 1, current_timestamp, current_timestamp);
+
+insert into sys_org (id, name, code, type, parent_id, address, status, created_at, updated_at)
+values (2001, '审计局-一处', 'ORG-2001', 1, 1001, '济南', 1, current_timestamp, current_timestamp);
 
 insert into sys_user (
     id, username, password_hash, real_name, phone, email, org_id,

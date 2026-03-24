@@ -5,7 +5,15 @@ drop table if exists sys_org;
 create table sys_org (
     id bigint auto_increment primary key,
     name varchar(128) not null,
-    type tinyint
+    code varchar(64),
+    type tinyint,
+    parent_id bigint,
+    address varchar(256),
+    status tinyint not null default 1,
+    created_at datetime not null default current_timestamp,
+    updated_at datetime not null default current_timestamp,
+    index idx_parent_id (parent_id),
+    constraint fk_org_parent foreign key (parent_id) references sys_org(id)
 );
 
 create table sys_user (
