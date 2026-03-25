@@ -134,3 +134,20 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     登录校验：AuthServiceImpl -> passwordCodec.matches(...)，已变为 BCrypt-only
     创建用户 / 改密码：UserController 已经是 passwordCodec.bcrypt(...) 入库，保持一致
     测试初始用户：admin 已是 BCrypt 哈希，和登录流程一致
+
+
+已实现接口（模块四）
+    GET /api/projects 项目分页列表
+    POST /api/projects 创建项目
+    PATCH /api/projects/{id}/status 项目状态流转（状态机）
+    GET /api/projects/{id}/stats 项目统计
+主要新增文件
+    src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/controller/ProjectController.java
+    src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/repository/ProjectRepository.java
+    src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/request/ProjectQueryRequest.java
+    src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/request/ProjectCreateRequest.java
+    src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/request/ProjectStatusRequest.java
+    src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/response/ProjectListItem.java
+    src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/response/ProjectDetailResponse.java
+    src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/response/ProjectStatsResponse.java
+    src/test/java/cn/edu/sdua/_db/ytz/company_tender_review/ProjectControllerTest.java
