@@ -12,6 +12,7 @@ drop table if exists sys_user;
 drop table if exists sys_operation_log;
 drop table if exists doc_extract_cache;
 drop table if exists doc_bid_announcement;
+drop table if exists doc_contract;
 drop table if exists project;
 drop table if exists document;
 drop table if exists change_request;
@@ -180,6 +181,32 @@ CREATE TABLE `doc_bid_announcement` (
     CONSTRAINT `fk_bid_ann_project` FOREIGN KEY (`project_id`)
         REFERENCES `project` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='招标公告扩展信息';
+
+-- 3.3 合同扩展信息表（依赖 document、project；与 document 1:1）
+CREATE TABLE `doc_contract` (
+    `id`                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `doc_id`            BIGINT UNSIGNED NOT NULL UNIQUE     COMMENT '关联 document.id（1:1）',
+    `project_id`        BIGINT UNSIGNED NOT NULL            COMMENT '关联项目ID → project',
+    `contract_no`       VARCHAR(128)                        COMMENT '合同编号',
+    `contract_amount`   DECIMAL(18,2)                       COMMENT '合同金额（元）',
+    `sign_date`         DATE                                COMMENT '签订日期',
+    `party_a`           VARCHAR(128)                        COMMENT '甲方（建设单位）',
+    `party_b`           VARCHAR(128)                        COMMENT '乙方（施工单位）',
+    `start_date`        DATE                                COMMENT '合同约定开工日期',
+    `end_date`          DATE                                COMMENT '合同约定竣工日期',
+    `warranty_period`   INT                                 COMMENT '质保期（月）',
+    `payment_terms`     TEXT                                COMMENT '付款条款原文',
+    `penalty_terms`     TEXT                                COMMENT '违约条款原文',
+    `created_at`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX `idx_project_id` (`project_id`),
+
+    CONSTRAINT `fk_contract_doc`     FOREIGN KEY (`doc_id`)
+        REFERENCES `document` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_contract_project` FOREIGN KEY (`project_id`)
+        REFERENCES `project` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='合同扩展信息';
 
 -- 3.4 施工变更申请表（依赖 project、sys_org、sys_user）
 CREATE TABLE `change_request` (
