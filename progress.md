@@ -151,3 +151,25 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/response/ProjectDetailResponse.java
     src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/response/ProjectStatsResponse.java
     src/test/java/cn/edu/sdua/_db/ytz/company_tender_review/ProjectControllerTest.java
+
+模块五接口实现
+    POST /api/documents/upload
+        multipart/form-data
+        需要 Authorization: Bearer {accessToken}
+        入库 document，并返回 DocumentDetailResponse
+    GET /api/documents
+        分页列表（DocumentQueryRequest：projectId 必填，其余可选）
+        返回 Page<DocumentDetailResponse>（R.okPage）
+    GET /api/documents/{id}/extract
+        若 doc_extract_cache 命中：直接返回
+        未命中：写入缓存并返回 ExtractResultResponse
+我新增/修改的关键代码文件
+新增（模块五 DTO/Controller/Repository/Service）：
+    src/main/java/.../controller/DocumentController.java
+    src/main/java/.../dto/request/DocumentUploadRequest.java
+    src/main/java/.../dto/request/DocumentQueryRequest.java
+    src/main/java/.../dto/response/DocumentDetailResponse.java
+    src/main/java/.../dto/response/ExtractResultResponse.java
+    src/main/java/.../repository/DocumentRepository.java
+    src/main/java/.../repository/DocumentExtractCacheRepository.java
+    src/main/java/.../service/DocumentExtractService.java

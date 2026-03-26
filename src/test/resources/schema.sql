@@ -10,6 +10,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 drop table if exists sys_org;
 drop table if exists sys_user;
 drop table if exists sys_operation_log;
+drop table if exists doc_extract_cache;
 drop table if exists project;
 drop table if exists document;
 drop table if exists change_request;
@@ -135,6 +136,20 @@ CREATE TABLE `document` (
     CONSTRAINT `fk_document_uploader` FOREIGN KEY (`uploader_id`)
         REFERENCES `sys_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件主表';
+
+-- 5.2 文件结构化提取结果缓存（依赖 document；与 document 1:1）
+CREATE TABLE `doc_extract_cache` (
+    `id`           BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `doc_id`       BIGINT UNSIGNED NOT NULL UNIQUE             COMMENT '关联文件ID → document（1:1）',
+    `extract_type` VARCHAR(64)                                 COMMENT '提取类型标识，如 bid_announcement / contract',
+    `result_json`  JSON                                        COMMENT '结构化提取结果',
+    `model_name`   VARCHAR(128)                                COMMENT '提取使用的模型',
+    `created_at`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT `fk_extract_cache_doc` FOREIGN KEY (`doc_id`)
+        REFERENCES `document` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件结构化提取缓存';
 
 -- 3.4 施工变更申请表（依赖 project、sys_org、sys_user）
 CREATE TABLE `change_request` (
