@@ -173,3 +173,23 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     src/main/java/.../repository/DocumentRepository.java
     src/main/java/.../repository/DocumentExtractCacheRepository.java
     src/main/java/.../service/DocumentExtractService.java
+
+新增接口：POST /api/bid-announcements
+    校验：
+        docId 对应的 document.doc_type 必须为 1（招标公告）
+        document.project_id 必须与请求 projectId 一致
+    写入：
+        插入到 doc_bid_announcement
+        publicNoticeDays 按 DATEDIFF(deadline_date, publish_date) 语义计算（按日期部分差值）
+    返回：
+        bidTypeName
+        publicNoticeDays
+        updatedAt（v2 字段，来自 updated_at）
+2) 新增代码文件
+    src/main/java/.../controller/BidAnnouncementController.java
+    src/main/java/.../dto/request/BidAnnouncementCreateRequest.java
+    src/main/java/.../dto/response/BidAnnouncementResponse.java
+    src/main/java/.../repository/BidAnnouncementRepository.java
+    src/main/java/.../repository/model/BidAnnouncementRow.java
+    （并给模块五的 DocumentRepository 增加了校验用的元信息方法）
+    src/main/java/.../repository/DocumentRepository.java（新增 findDocMetaById）

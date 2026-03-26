@@ -162,6 +162,21 @@ public class DocumentRepository {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
+    public DocumentMeta findDocMetaById(Long docId) {
+        // 仅用于扩展表写入前的校验：doc_type 与 doc.project_id
+        List<DocumentMeta> rows = jdbcTemplate.query("""
+                select doc_type, project_id
+                  from document
+                 where id = ?
+                """, (rs, rowNum) -> new DocumentMeta(
+                rs.getObject("doc_type", Integer.class),
+                rs.getLong("project_id")
+        ), docId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public record DocumentMeta(Integer docType, Long projectId) {}
+
     public void updateParseStatus(Long docId, int parseStatus) {
         jdbcTemplate.update("update document set parse_status = ?, updated_at = now() where id = ?",
                 parseStatus, docId);

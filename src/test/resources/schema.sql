@@ -11,6 +11,7 @@ drop table if exists sys_org;
 drop table if exists sys_user;
 drop table if exists sys_operation_log;
 drop table if exists doc_extract_cache;
+drop table if exists doc_bid_announcement;
 drop table if exists project;
 drop table if exists document;
 drop table if exists change_request;
@@ -150,6 +151,35 @@ CREATE TABLE `doc_extract_cache` (
     CONSTRAINT `fk_extract_cache_doc` FOREIGN KEY (`doc_id`)
         REFERENCES `document` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件结构化提取缓存';
+
+-- 3.2 招标公告扩展信息表（依赖 document、project；与 document 1:1）
+CREATE TABLE `doc_bid_announcement` (
+    `id`                   BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `doc_id`               BIGINT UNSIGNED NOT NULL UNIQUE  COMMENT '关联 document.id（1:1）',
+    `project_id`           BIGINT UNSIGNED NOT NULL         COMMENT '关联项目ID → project',
+    `bid_no`               VARCHAR(128)                     COMMENT '招标编号',
+    `bid_type`             TINYINT                          COMMENT '招标方式: 1=公开 2=邀请 3=竞争性谈判',
+    `publish_date`         DATETIME                         COMMENT '公告发布时间',
+    `deadline_date`        DATETIME                         COMMENT '投标截止时间',
+    `bid_open_date`        DATETIME                         COMMENT '开标时间',
+    `public_notice_days`   INT                              COMMENT '公示期天数（系统自动计算）',
+    `platform_name`        VARCHAR(128)                     COMMENT '发布平台名称',
+    `platform_url`         VARCHAR(512)                     COMMENT '发布平台URL',
+    `is_public_platform`   TINYINT                          COMMENT '是否在合规公开平台: 1=是 0=否 NULL=待核验',
+    `qualification_req`    TEXT                             COMMENT '资质要求原文',
+    `performance_req`      TEXT                             COMMENT '业绩要求原文',
+    `estimated_price`      DECIMAL(18,2)                    COMMENT '招标控制价（元）',
+    `created_at`           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`           DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    INDEX `idx_project_id` (`project_id`),
+    INDEX `idx_bid_no`     (`bid_no`),
+
+    CONSTRAINT `fk_bid_ann_doc`     FOREIGN KEY (`doc_id`)
+        REFERENCES `document` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_bid_ann_project` FOREIGN KEY (`project_id`)
+        REFERENCES `project` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='招标公告扩展信息';
 
 -- 3.4 施工变更申请表（依赖 project、sys_org、sys_user）
 CREATE TABLE `change_request` (
