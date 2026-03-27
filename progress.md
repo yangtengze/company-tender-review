@@ -270,3 +270,14 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     新增仓储与控制器
         src/main/java/.../repository/ReviewTaskRepository.java
         src/main/java/.../controller/ReviewTaskController.java
+
+-- 模块十 --
+已实现模块十「审查结果」/api/review-results，包含：
+    GET /api/review-results：分页列表（支持 projectId/overallVerdict/riskLevel/reviewStatus/taskType/dateFrom/dateTo/page/size）
+    PATCH /api/review-results/{id}/review：人工复核（从 Authorization 里的 Bearer access token 解析 reviewerId；reviewStatus=3 时要求 reviewerNote 非空）
+    GET /api/review-results/{id}/export：根据 format=pdf|word 返回对应 Content-Type
+并新增了对应 DTO、仓库与测试：
+    ReviewResultController / ReviewResultRepository
+    ReviewResultQueryRequest / ReviewConfirmRequest
+    ReviewResultListItem / ReviewResultDetailResponse
+    ReviewResultControllerTest
