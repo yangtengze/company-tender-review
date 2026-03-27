@@ -1,10 +1,12 @@
-# 已实现内容
-## 全局约定
+-- 模块一 -- 
+
+已实现内容
+  全局约定
     R<T> 统一响应体：code/message/data/total/page/size
     通用分页参数对象 PageQuery：page/size/orderBy/order，含注解校验
     全局异常处理 GlobalExceptionHandler：统一返回业务错误码（如参数校验失败、请求体格式错误等）
     OpenAPI/Swagger 配置 OpenApiConfig（包含 bearerAuth）
-## 模块一 /api/auth
+模块一 /api/auth
     POST /api/auth/login
     POST /api/auth/refresh
     GET /api/auth/me
@@ -13,7 +15,7 @@
         LoginRequest, RefreshRequest
         LoginResponse, UserDetailResponse
     AuthService + AuthServiceImpl：当前使用内存用户和 token 存储（便于先联调和测试，后续可替换为 DB+JWT）
-## 测试
+测试
 
     AuthControllerTest（MockMvc）覆盖：
         登录 + 获取当前用户
@@ -21,7 +23,7 @@
         登录参数校验失败
         logout 后 token 失效
 
-## 新增主要文件
+新增主要文件
     pom.xml
     src/main/java/com/finaldesign/audit/AuditBackendApplication.java
     src/main/java/com/finaldesign/audit/common/R.java
@@ -34,12 +36,12 @@
     src/main/java/com/finaldesign/audit/dto/request/*
     src/main/java/com/finaldesign/audit/dto/response/*
     src/test/java/com/finaldesign/audit/AuthControllerTest.java
-## 测试执行情况
+测试执行情况
     我已尝试执行 mvn test，但你当前终端环境提示找不到 mvn（PATH 未识别 Maven 命令）。
     代码静态诊断已检查：无 linter 错误。
 
 
-
+-- 登陆签名设置 --
 这次改了什么
     Auth 改为真正 JWT
 
@@ -77,6 +79,7 @@
         src/test/resources/schema.sql（新增）
         src/test/resources/data.sql（新增）
 
+-- 模块二 -- 
 已实现：模块二 机构管理 /api/orgs
     GET /api/orgs：支持 type/status/tree 查询
         默认：status=1、tree=false（平铺列表）
@@ -99,6 +102,7 @@
         src/test/resources/schema.sql（补齐 parent_id/status/created_at/updated_at 等）
         src/test/resources/data.sql（初始化 1001 根节点 + 2001 子节点）
 
+-- 模块三 -- 
 已实现：模块三 用户管理 /api/users
     GET /api/users：用户分页列表（支持 orgId/role/status/keyword/page/size）
         返回用现有 R.okPage(data,total,page,size) 结构承载 Page<UserListItem>。
@@ -136,6 +140,7 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     测试初始用户：admin 已是 BCrypt 哈希，和登录流程一致
 
 
+-- 模块四 -- 
 已实现接口（模块四）
     GET /api/projects 项目分页列表
     POST /api/projects 创建项目
@@ -152,6 +157,7 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     src/main/java/cn/edu/sdua/_db/ytz/company_tender_review/dto/response/ProjectStatsResponse.java
     src/test/java/cn/edu/sdua/_db/ytz/company_tender_review/ProjectControllerTest.java
 
+-- 模块五 -- 
 模块五接口实现
     POST /api/documents/upload
         multipart/form-data
@@ -174,6 +180,7 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     src/main/java/.../repository/DocumentExtractCacheRepository.java
     src/main/java/.../service/DocumentExtractService.java
 
+-- 模块六 -- 
 新增接口：POST /api/bid-announcements
     校验：
         docId 对应的 document.doc_type 必须为 1（招标公告）
@@ -193,3 +200,44 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     src/main/java/.../repository/model/BidAnnouncementRow.java
     （并给模块五的 DocumentRepository 增加了校验用的元信息方法）
     src/main/java/.../repository/DocumentRepository.java（新增 findDocMetaById）
+
+-- 模块七 -- 
+实现内容
+1. 新增接口
+    POST /api/contracts
+        校验 document.doc_type == 5（合同）
+        校验 document.project_id == request.projectId
+        写入 doc_contract
+        返回 ContractResponse，包含 updatedAt
+2. 新增代码文件（模块七）
+    src/main/java/.../dto/request/ContractCreateRequest.java
+    src/main/java/.../dto/response/ContractResponse.java
+    src/main/java/.../repository/ContractRepository.java
+    src/main/java/.../controller/ContractController.java
+
+
+-- 模块八 -- 
+模块八实现内容
+8.1 POST /api/change-requests
+实现：ChangeRequestController#create
+    入库 change_request
+    若请求未传 originalAmount，则从 project.contract_amount 自动带入
+    计算 changeRatio = changeAmount / originalAmount * 100（四位小数）
+    返回 ChangeRequestDetailResponse
+        statusName / changeTypeName 等枚举文本
+        docs 为关联表 change_request_doc 查询结果（新建时为空数组）
+8.2 POST /api/change-requests/{id}/docs
+实现：ChangeRequestController#bindDoc
+    先检查唯一性：uk_change_doc(change_request_id, doc_id)
+    若重复绑定：返回 R.fail(409, "conflict")
+    校验 document.project_id 必须与 change_request.project_id 一致
+    插入 change_request_doc
+    返回 R.ok(null)
+新增/修改文件
+新增代码（模块八）
+    src/main/java/.../controller/ChangeRequestController.java
+    src/main/java/.../repository/ChangeRequestRepository.java
+    src/main/java/.../dto/request/ChangeRequestCreateRequest.java
+    src/main/java/.../dto/request/ChangeDocBindRequest.java
+    src/main/java/.../dto/response/ChangeRequestDetailResponse.java
+    src/main/java/.../dto/response/ChangeDocItem.java

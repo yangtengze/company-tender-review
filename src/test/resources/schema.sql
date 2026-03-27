@@ -16,6 +16,7 @@ drop table if exists doc_contract;
 drop table if exists project;
 drop table if exists document;
 drop table if exists change_request;
+drop table if exists change_request_doc;
 drop table if exists review_task;
 drop table if exists review_result;
 drop table if exists review_item_result;
@@ -240,6 +241,22 @@ CREATE TABLE `change_request` (
     CONSTRAINT `fk_change_req_creator`   FOREIGN KEY (`creator_id`)
         REFERENCES `sys_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='施工变更申请表';
+
+-- 3.5 变更申请与文件关联表（依赖 change_request、document；多对多中间表）
+CREATE TABLE `change_request_doc` (
+    `id`                BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `change_request_id` BIGINT UNSIGNED NOT NULL              COMMENT '变更申请ID → change_request',
+    `doc_id`            BIGINT UNSIGNED NOT NULL              COMMENT '文件ID → document',
+    `doc_role`          TINYINT                               COMMENT '文件角色: 1=变更方案 2=原设计图纸 3=工程量清单 4=佐证材料',
+
+    UNIQUE KEY `uk_change_doc` (`change_request_id`, `doc_id`),
+    INDEX `idx_doc_id` (`doc_id`),
+
+    CONSTRAINT `fk_cr_doc_change` FOREIGN KEY (`change_request_id`)
+        REFERENCES `change_request` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_cr_doc_doc` FOREIGN KEY (`doc_id`)
+        REFERENCES `document` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='变更申请与文件关联表';
 
 -- 4.1 审查任务主表
 CREATE TABLE `review_task` (
