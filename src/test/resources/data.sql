@@ -52,3 +52,8 @@ insert into document (id, project_id, doc_type, doc_name, file_path, created_at,
 values
 (1, 1, 1, '公告.pdf', '/tmp/1.pdf', current_timestamp, current_timestamp),
 (2, 1, 5, '合同.pdf', '/tmp/2.pdf', current_timestamp, current_timestamp);
+
+insert into review_task_doc (id, task_id, doc_id, doc_role)
+values
+(1, 1, 1, '公告主文档'),
+(2, 2, 2, '合同主文档');

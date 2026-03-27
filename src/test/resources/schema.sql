@@ -18,6 +18,7 @@ drop table if exists document;
 drop table if exists change_request;
 drop table if exists change_request_doc;
 drop table if exists review_task;
+drop table if exists review_task_doc;
 drop table if exists review_result;
 drop table if exists review_item_result;
 drop table if exists review_issue;
@@ -295,6 +296,22 @@ CREATE TABLE `review_task` (
     CONSTRAINT `fk_task_creator`  FOREIGN KEY (`creator_id`)
         REFERENCES `sys_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审查任务主表';
+
+-- 4.2 审查任务与文件关联表（依赖 review_task、document；多对多中间表）
+CREATE TABLE `review_task_doc` (
+    `id`       BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `task_id`  BIGINT UNSIGNED NOT NULL                      COMMENT '审查任务ID → review_task',
+    `doc_id`   BIGINT UNSIGNED NOT NULL                      COMMENT '文件ID → document',
+    `doc_role` VARCHAR(64)                                   COMMENT '文件在本次审查中的角色说明',
+
+    UNIQUE KEY `uk_task_doc` (`task_id`, `doc_id`),
+    INDEX `idx_doc_id` (`doc_id`),
+
+    CONSTRAINT `fk_task_doc_task` FOREIGN KEY (`task_id`)
+        REFERENCES `review_task` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_task_doc_doc`  FOREIGN KEY (`doc_id`)
+        REFERENCES `document` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='审查任务与文件关联';
 
 -- 5.1 审查结果主表（与 review_task 1:1）
 CREATE TABLE `review_result` (

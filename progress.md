@@ -241,3 +241,32 @@ pom.xml（加 spring-security-crypto + Testcontainers 依赖）
     src/main/java/.../dto/request/ChangeDocBindRequest.java
     src/main/java/.../dto/response/ChangeRequestDetailResponse.java
     src/main/java/.../dto/response/ChangeDocItem.java
+
+-- 模块九 --
+已实现接口
+1) POST /api/review-tasks 创建审查任务
+    校验并创建 review_task
+    自动生成 taskNo：RT-yyyyMMdd-xxxx
+    taskType=2 时强制要求 changeId
+    校验 docIds 必填且文档属于同一项目
+    批量写入 review_task_doc（带可选 doc_role）
+    返回 ReviewTaskDetailResponse（含 docs 列表）
+2) GET /api/review-tasks 任务分页列表
+    支持过滤：projectId/taskType/status/assigneeId/dateFrom/dateTo
+    返回分页结构 R.okPage(...)
+    每条记录带 docs 列表
+3) GET /api/review-tasks/{id}/result 完整审查结果
+    返回：总结果 + 子项结果 + 问题列表
+    映射了规范要求的名称字段：
+    verdictName/riskLevelName/reviewStatusName/typeName/severityName/statusName
+    子项中的 refLaws/refCases 已按 JSON id 列表转换为对象列表（当前无知识库表时 title/clauseNo 为 null）
+新增/修改文件
+    新增 DTO
+        src/main/java/.../dto/request/ReviewTaskCreateRequest.java
+        src/main/java/.../dto/request/ReviewTaskQueryRequest.java
+        src/main/java/.../dto/response/TaskDocItem.java
+        src/main/java/.../dto/response/ReviewTaskDetailResponse.java
+        src/main/java/.../dto/response/ReviewFullResultResponse.java
+    新增仓储与控制器
+        src/main/java/.../repository/ReviewTaskRepository.java
+        src/main/java/.../controller/ReviewTaskController.java
