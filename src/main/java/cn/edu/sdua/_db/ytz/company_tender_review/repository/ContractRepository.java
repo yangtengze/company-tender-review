@@ -84,7 +84,7 @@ public class ContractRepository {
                        party_a, party_b,
                        start_date, end_date,
                        warranty_period, payment_terms, penalty_terms,
-                       updated_at
+                       created_at, updated_at
                   from doc_contract
                  where id = ?
                 """, (rs, rowNum) -> {
@@ -105,6 +105,8 @@ public class ContractRepository {
             r.setWarrantyPeriod((Integer) rs.getObject("warranty_period"));
             r.setPaymentTerms(rs.getString("payment_terms"));
             r.setPenaltyTerms(rs.getString("penalty_terms"));
+            LocalDateTime ct = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toLocalDateTime();
+            r.setCreatedAt(ct == null ? null : ct.format(ISO_LOCAL_DATE_TIME));
             LocalDateTime ut = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toLocalDateTime();
             r.setUpdatedAt(ut == null ? null : ut.format(ISO_LOCAL_DATE_TIME));
             return r;

@@ -48,6 +48,7 @@ class ContractControllerTest {
                 .andExpect(jsonPath("$.data.contractAmount").value(500000.0))
                 .andExpect(jsonPath("$.data.signDate").value("2026-01-01"))
                 .andExpect(jsonPath("$.data.warrantyPeriod").value(12))
+                .andExpect(jsonPath("$.data.createdAt").isNotEmpty())
                 .andExpect(jsonPath("$.data.updatedAt").isNotEmpty());
     }
 

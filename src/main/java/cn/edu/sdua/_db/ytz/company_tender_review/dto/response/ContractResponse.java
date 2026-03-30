@@ -16,6 +16,7 @@ public class ContractResponse {
     private Integer warrantyPeriod;
     private String paymentTerms;
     private String penaltyTerms;
+    private String createdAt;
     private String updatedAt;
 
     public Long getId() { return id; }
@@ -44,6 +45,8 @@ public class ContractResponse {
     public void setPaymentTerms(String paymentTerms) { this.paymentTerms = paymentTerms; }
     public String getPenaltyTerms() { return penaltyTerms; }
     public void setPenaltyTerms(String penaltyTerms) { this.penaltyTerms = penaltyTerms; }
+    public String getCreatedAt() {return createdAt;}
+    public void setCreatedAt(String createdAt) {this.createdAt = createdAt;}
     public String getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 }
