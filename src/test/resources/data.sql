@@ -57,3 +57,13 @@ insert into review_task_doc (id, task_id, doc_id, doc_role)
 values
 (1, 1, 1, '公告主文档'),
 (2, 2, 2, '合同主文档');
+
+insert into law_regulation(id,title,short_name,category,status,created_at,updated_at)
+values
+(1,'测试1','杨腾泽',2,0,current_timestamp,current_timestamp),
+(2,'测试2','李玉璇',1,1,current_timestamp,current_timestamp);
+
+insert into law_clause(id, law_id, clause_no, title, content, keywords, created_at)
+values
+(1,1,"第一条",null,"测试1",'["key1","key2"]', current_timestamp),
+(2,1,"第二条",null,"测试2",'["key1","key2","key3"]', current_timestamp);

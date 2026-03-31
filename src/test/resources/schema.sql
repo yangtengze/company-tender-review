@@ -22,6 +22,8 @@ drop table if exists review_task_doc;
 drop table if exists review_result;
 drop table if exists review_item_result;
 drop table if exists review_issue;
+drop table if exists law_regulation;
+drop table if exists law_clause;
 
 -- 1.1 机构/单位表（无外部依赖，最先建）
 CREATE TABLE `sys_org` (
@@ -436,5 +438,47 @@ CREATE TABLE `sys_operation_log` (
     CONSTRAINT `fk_op_log_user` FOREIGN KEY (`user_id`)
         REFERENCES `sys_user` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='操作日志';
+
+-- 6.1 法规库
+CREATE TABLE `law_regulation` (
+    `id`             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '法规ID',
+    `title`          VARCHAR(256)    NOT NULL                   COMMENT '法规标题',
+    `short_name`     VARCHAR(128)                               COMMENT '简称',
+    `law_no`         VARCHAR(128)                               COMMENT '法规编号',
+    `category`       TINYINT                                    COMMENT '类别: 1=法律 2=行政法规 3=部门规章 4=地方性法规 5=标准规范',
+    `issuer`         VARCHAR(128)                               COMMENT '发布机关',
+    `issue_date`     DATE                                       COMMENT '发布日期',
+    `effective_date` DATE                                       COMMENT '生效日期',
+    `expire_date`    DATE                                       COMMENT '废止日期（NULL=现行有效）',
+    `full_text`      LONGTEXT                                   COMMENT '法规全文',
+    `summary`        TEXT                                       COMMENT '摘要',
+    `keywords`       JSON                                       COMMENT '关键词列表 ["招标","公示期"]',
+    `status`         TINYINT         DEFAULT 1                  COMMENT '状态: 1=有效 0=废止',
+    `created_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FULLTEXT INDEX `ft_title_text` (`title`, `full_text`),
+    INDEX `idx_category` (`category`),
+    INDEX `idx_status`   (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='法规库';
+
+
+-- 6.2 法规条款表（依赖 law_regulation；细粒度条款拆分）
+CREATE TABLE `law_clause` (
+    `id`        BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY COMMENT '条款ID',
+    `law_id`    BIGINT UNSIGNED NOT NULL                   COMMENT '所属法规ID → law_regulation',
+    `clause_no` VARCHAR(64)                                COMMENT '条款编号（如"第十五条"）',
+    `title`     VARCHAR(256)                               COMMENT '条款标题',
+    `content`   TEXT            NOT NULL                   COMMENT '条款内容',
+    `keywords`  JSON                                       COMMENT '关键词',
+    `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX `idx_law_id` (`law_id`),
+
+    CONSTRAINT `fk_clause_law` FOREIGN KEY (`law_id`)
+        REFERENCES `law_regulation` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='法规条款表';
+
+
 
 SET FOREIGN_KEY_CHECKS = 1;
