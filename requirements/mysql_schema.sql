@@ -17,6 +17,30 @@ CREATE DATABASE IF NOT EXISTS company_tender_review
   DEFAULT COLLATE utf8mb4_0900_ai_ci;
 
 USE company_tender_review; 
+
+drop table if exists sys_org;
+drop table if exists sys_user;
+drop table if exists project;
+drop table if exists document;
+drop table if exists doc_bid_announcement;
+drop table if exists doc_contract;
+drop table if exists change_request;
+drop table if exists change_request_doc;
+drop table if exists review_task;
+drop table if exists review_task_doc;
+drop table if exists review_result;
+drop table if exists review_item_result;
+drop table if exists review_issue;
+drop table if exists law_regulation;
+drop table if exists law_clause;
+drop table if exists case_library;
+drop table if exists market_price;
+drop table if exists public_platform;
+drop table if exists llm_call_log;
+drop table if exists doc_extract_cache;
+drop table if exists sys_operation_log;
+drop table if exists sys_notification;
+
 -- ============================================================
 -- 模块一：基础支撑层
 -- 建表顺序：sys_org → sys_user（user 引用 org，org 必须先建）

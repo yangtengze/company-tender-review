@@ -67,3 +67,7 @@ insert into law_clause(id, law_id, clause_no, title, content, keywords, created_
 values
 (1,1,"第一条",null,"测试1",'["key1","key2"]', current_timestamp),
 (2,1,"第二条",null,"测试2",'["key1","key2","key3"]', current_timestamp);
+
+insert into case_library(id, title, case_type, case_date, created_at, updated_at)
+values
+(1, "测试1", 1, '2026-02-01', current_timestamp, current_timestamp);
