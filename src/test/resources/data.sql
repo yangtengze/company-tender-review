@@ -85,3 +85,9 @@ values
 (1, 1, 'test_model1', 1, 1000, "2026-04-06T11:47:00"),
 (2, 2, 'test_model2', 1, 1000, "2026-04-06T11:47:43"),
 (3, 1, 'test_model1', 0, 1000, "2026-04-06T11:47:00");
+
+insert into sys_notification(id, user_id, type,  title, is_read, created_at, updated_at)
+values
+(1, 1, 2, "测试通知1", 0, current_timestamp, current_timestamp),
+(2, 1, 3, "测试通知2", 1, current_timestamp, current_timestamp),
+(3, 1, 1, "测试通知3", 0, current_timestamp, current_timestamp);
