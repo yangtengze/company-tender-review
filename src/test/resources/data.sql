@@ -71,3 +71,7 @@ values
 insert into case_library(id, title, case_type, case_date, created_at, updated_at)
 values
 (1, "测试1", 1, '2026-02-01', current_timestamp, current_timestamp);
+
+insert into market_price(id, item_code, item_name, category, price, price_date, region, created_at, updated_at)
+values
+(1, "1001", "测试项目", 1, 100.1, "2026-04-02", "中国滨州", current_timestamp, current_timestamp);

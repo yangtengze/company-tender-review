@@ -545,6 +545,7 @@ CREATE TABLE `market_price` (
     `region`     VARCHAR(64)                               COMMENT '适用地区',
     `source`     VARCHAR(128)                              COMMENT '数据来源',
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE KEY `uk_price_item_region_date` (`item_code`, `region`, `price_date`),
     INDEX `idx_item_code`  (`item_code`),
