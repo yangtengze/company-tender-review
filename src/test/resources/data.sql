@@ -79,3 +79,9 @@ values
 insert into public_platform(id, name, url, level, region, is_approved, created_at, updated_at)
 values
 (1, "测试平台", "https://www.baidu.com/", 1, "中国滨州", 1, current_timestamp, current_timestamp);
+
+insert into llm_call_log (id, task_id, model_name, status, latency_ms, created_at)
+values
+(1, 1, 'test_model1', 1, 1000, "2026-04-06T11:47:00"),
+(2, 2, 'test_model2', 1, 1000, "2026-04-06T11:47:43"),
+(3, 1, 'test_model1', 0, 1000, "2026-04-06T11:47:00");
