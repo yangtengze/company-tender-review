@@ -75,3 +75,7 @@ values
 insert into market_price(id, item_code, item_name, category, price, price_date, region, created_at, updated_at)
 values
 (1, "1001", "测试项目", 1, 100.1, "2026-04-02", "中国滨州", current_timestamp, current_timestamp);
+
+insert into public_platform(id, name, url, level, region, is_approved, created_at, updated_at)
+values
+(1, "测试平台", "https://www.baidu.com/", 1, "中国滨州", 1, current_timestamp, current_timestamp);
