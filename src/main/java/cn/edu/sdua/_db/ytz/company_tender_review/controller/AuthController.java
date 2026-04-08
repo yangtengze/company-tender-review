@@ -42,13 +42,18 @@ public class AuthController {
 
     @Operation(summary = "获取当前用户信息")
     @GetMapping("/me")
-    public R<UserDetailResponse> me(@RequestHeader("Authorization") String authorization) {
+    public R<UserDetailResponse> me(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
+        }
         return R.ok(authService.me(authorization));
     }
-
     @Operation(summary = "登出，写操作日志，客户端丢弃 Token")
     @PostMapping("/logout")
-    public R<Void> logout(@RequestHeader("Authorization") String authorization) {
+    public R<Void> logout(@RequestHeader(value = "Authorization", required = false) String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
+        }
         authService.logout(authorization);
         return R.ok(null);
     }

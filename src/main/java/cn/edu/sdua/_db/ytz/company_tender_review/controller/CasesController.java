@@ -24,8 +24,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/cases")
 public class CasesController {
-    private CasesRepository casesRepository;
-
+    private final CasesRepository casesRepository;
 
     public CasesController(CasesRepository casesRepository) {
         this.casesRepository = casesRepository;

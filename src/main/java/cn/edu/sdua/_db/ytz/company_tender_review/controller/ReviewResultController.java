@@ -50,9 +50,12 @@ public class ReviewResultController {
 
     @Operation(summary = "审查员对 AI 结果进行确认或驳回")
     @PatchMapping("/{id}/review")
-    public R<ReviewResultDetailResponse> review(@RequestHeader("Authorization") String authorization,
+    public R<ReviewResultDetailResponse> review(@RequestHeader(value = "Authorization", required = false) String authorization,
                                                    @PathVariable("id") Long id,
                                                    @Valid @RequestBody ReviewConfirmRequest request) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
+        }
         Long reviewerId = jwtTokenService.parseAccessUserId(authorization);
         if (request.getReviewStatus() == null) {
             throw new IllegalArgumentException("reviewStatus required");

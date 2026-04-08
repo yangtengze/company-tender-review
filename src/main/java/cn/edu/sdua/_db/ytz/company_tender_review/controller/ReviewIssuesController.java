@@ -43,9 +43,12 @@ public class ReviewIssuesController {
     }
     @Operation(summary = "更新问题整改状态")
     @PatchMapping("/{id}/handle")
-    public R<IssueDetailResponse> updateStatus(@RequestHeader("Authorization") String authorization,
+    public R<IssueDetailResponse> updateStatus(@RequestHeader(value = "Authorization", required = false) String authorization,
                                                 @PathVariable("id") Long id,
                                                 @RequestBody @Valid IssueHandleRequest request) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
+        }
         Long authId = jwtTokenService.parseAccessUserId(authorization);
         if (request.getStatus() == null) {
             throw new IllegalArgumentException("status required");

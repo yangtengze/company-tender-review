@@ -58,8 +58,11 @@ public class NotificationsController {
     }
     @Operation(summary = "将当前用户所有未读通知标记为已读")
     @PatchMapping("/read-all")
-    public R<Void> readAll(@RequestHeader("Authorization") String authorization) {
+    public R<Void> readAll(@RequestHeader(value = "Authorization", required = false) String authorization) {
         try {
+            if (authorization == null || !authorization.startsWith("Bearer ")) {
+                return R.fail(401, "Invalid authorization header(Bearer )");
+            }
             Long authId = jwtTokenService.parseAccessUserId(authorization);
             notificationsRepository.readAll(authId);
             return R.ok(null);

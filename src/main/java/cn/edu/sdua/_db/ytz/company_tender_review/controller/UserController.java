@@ -56,8 +56,12 @@ public class UserController {
 
     @Operation(summary = "查询用户分页列表")
     @GetMapping
-    public R<List<UserListItem>> list(@RequestHeader("Authorization") String authorization,
+    public R<List<UserListItem>> list(@RequestHeader(value = "Authorization", required = false) String authorization,
                                       @Valid UserQueryRequest request) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
+        }
+
         requireAdmin(authorization);
 
         long total = userRepository.countUsers(request.getOrgId(), request.getRole(), request.getStatus(), request.getKeyword());
@@ -75,8 +79,11 @@ public class UserController {
 
     @Operation(summary = "创建新用户，密码 BCrypt 加密后入库")
     @PostMapping
-    public R<UserDetailResponse> create(@RequestHeader("Authorization") String authorization,
+    public R<UserDetailResponse> create(@RequestHeader(value = "Authorization", required = false) String authorization,
                                         @Valid @RequestBody UserCreateRequest request) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
+        }
         requireAdmin(authorization);
         if (orgRepository.findById(request.getOrgId()).isEmpty()) {
             throw new IllegalArgumentException("org not found");
@@ -97,9 +104,12 @@ public class UserController {
 
     @Operation(summary = "更新用户信息，超管可改 role/status")
     @PutMapping("/{id}")
-    public R<UserDetailResponse> update(@RequestHeader("Authorization") String authorization,
+    public R<UserDetailResponse> update(@RequestHeader(value = "Authorization", required = false) String authorization,
                                         @PathVariable("id") Long id,
                                         @Valid @RequestBody UserUpdateRequest request) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
+        }
         requireAdmin(authorization);
         userRepository.updateUser(id, request.getRealName(), request.getPhone(), request.getEmail(),
                 request.getRole(), request.getStatus(), request.getAvatarUrl());
@@ -109,9 +119,12 @@ public class UserController {
 
     @Operation(summary = "修改密码；超管可强制重置他人")
     @PatchMapping("/{id}/pwd")
-    public R<Void> changePassword(@RequestHeader("Authorization") String authorization,
+    public R<Void> changePassword(@RequestHeader(value = "Authorization", required = false) String authorization,
                                   @PathVariable("id") Long id,
                                   @Valid @RequestBody ChangePasswordRequest request) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
+        }
         UserAuthView current = requireAdmin(authorization);
         if (request.getNewPassword() == null || request.getConfirmPassword() == null
                 || !request.getNewPassword().equals(request.getConfirmPassword())) {

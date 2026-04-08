@@ -26,7 +26,7 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/market-prices")
 public class MarketPricesController {
-    private MarketPricesRepository marketPricesRepository;
+    private final MarketPricesRepository marketPricesRepository;
 
     public MarketPricesController(MarketPricesRepository marketPricesRepository) {
         this.marketPricesRepository = marketPricesRepository;
