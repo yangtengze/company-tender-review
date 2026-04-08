@@ -12,37 +12,46 @@ import java.util.List;
 import java.util.Map;
 
 public class ReviewTaskCreateRequest {
-    @NotNull
-    @Positive
+
+    @NotNull(message = "项目ID不能为空")
+    @Positive(message = "项目ID必须为正数")
     private Long projectId;
 
-    @NotNull
-    @Min(1)
-    @Max(2)
+
+    @NotNull(message = "任务类型不能为空")
+    @Min(value = 1, message = "任务类型最小为1")
+    @Max(value = 2, message = "任务类型最大为2")
     private Integer taskType;
 
-    @NotBlank
-    @Size(max = 256)
+
+    @NotBlank(message = "任务名称不能为空")
+    @Size(max = 256, message = "任务名称长度不能超过256字符")
     private String taskName;
 
-    @Positive
+
+    @Positive(message = "变更ID必须为正数")
     private Long changeId;
 
-    @NotEmpty
-    @Size(max = 20)
+
+    @NotEmpty(message = "文档ID列表不能为空")
+    @Size(max = 20, message = "文档ID列表最多20个")
+    @jakarta.validation.Valid
     private List<Long> docIds;
 
     private Map<Long, String> docRoles;
 
-    @Min(1)
-    @Max(3)
+
+    @Min(value = 1, message = "优先级最小为1")
+    @Max(value = 3, message = "优先级最大为3")
     private Integer priority;
 
-    @Positive
+
+    @Positive(message = "分配人ID必须为正数")
     private Long assigneeId;
 
-    @Min(1)
-    @Max(2)
+
+    @Min(value = 1, message = "触发方式最小为1")
+    @Max(value = 2, message = "触发方式最大为2")
     private Integer triggerMode;
 
     public Long getProjectId() { return projectId; }

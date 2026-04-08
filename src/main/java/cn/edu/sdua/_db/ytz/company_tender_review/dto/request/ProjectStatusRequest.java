@@ -7,9 +7,9 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public class ProjectStatusRequest {
-    @NotNull
-    @Min(1)
-    @Max(5)
+    @NotNull(message = "状态不能为空")
+    @Min(value = 1, message = "状态最小为1")
+    @Max(value = 5, message = "状态最大为5")
     private Integer status;
     private LocalDate actualStart;
     private LocalDate actualEnd;

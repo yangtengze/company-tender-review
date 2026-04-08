@@ -9,20 +9,20 @@ import java.time.LocalDateTime;
 public class ReviewResultQueryRequest {
     private Long projectId;
 
-    @Min(1)
-    @Max(3)
+    @Min(value = 1, message = "整体判定最小为1")
+    @Max(value = 3, message = "整体判定最大为3")
     private Integer overallVerdict;
 
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "风险等级最小为1")
+    @Max(value = 4, message = "风险等级最大为4")
     private Integer riskLevel;
 
-    @Min(1)
-    @Max(3)
+    @Min(value = 1, message = "评审状态最小为1")
+    @Max(value = 3, message = "评审状态最大为3")
     private Integer reviewStatus;
 
-    @Min(1)
-    @Max(2)
+    @Min(value = 1, message = "任务类型最小为1")
+    @Max(value = 2, message = "任务类型最大为2")
     private Integer taskType;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -31,10 +31,10 @@ public class ReviewResultQueryRequest {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateTo;
 
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page = 1;
 
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size = 20;
 
     public Long getProjectId() {

@@ -10,28 +10,37 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class CaseCreateRequest {
-    @NotBlank
-    @Size(max = 256)
+
+    @NotBlank(message = "标题不能为空")
+    @Size(max = 256, message = "标题长度不能超过256字符")
     private String title;
-    @NotNull
-    @Min(1)
-    @Max(4)
+
+    @NotNull(message = "案例类型不能为空")
+    @Min(value = 1, message = "案例类型最小为1")
+    @Max(value = 4, message = "案例类型最大为4")
     private Integer caseType;
-    @Size(max = 128)
+
+    @Size(max = 128, message = "来源长度不能超过128字符")
     private String source;
     private LocalDate caseDate;
-    @Min(1)
-    @Max(5)
+
+    @Min(value = 1, message = "项目类型最小为1")
+    @Max(value = 5, message = "项目类型最大为5")
     private Integer projectType;
-    @Min(1)
-    @Max(6)
+
+    @Min(value = 1, message = "问题类型最小为1")
+    @Max(value = 6, message = "问题类型最大为6")
     private Integer issueType;
-    @NotBlank
+
+    @NotBlank(message = "案例描述不能为空")
     private String description;
     private String keyFindings;
     private String outcome;
     private String lesson;
+
+    @jakarta.validation.Valid
     private List<String> keywords;
+    @jakarta.validation.Valid
     private List<Long> refLawIds;
     public LocalDate getCaseDate() {
         return caseDate;

@@ -5,17 +5,17 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 public class LawQueryRequest {
-    @Min(1)
-    @Max(5)
+    @Min(value = 1, message = "法规类别最小为1")
+    @Max(value = 5, message = "法规类别最大为5")
     private Integer category;
-    @Min(0)
-    @Max(1)
+    @Min(value = 0, message = "状态最小为0")
+    @Max(value = 1, message = "状态最大为1")
     private Integer status;
-    @Size(max = 100)
+    @Size(max = 100, message = "关键字长度不能超过100字符")
     private String keyword;
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page;
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size;
     
     public Integer getCategory() {

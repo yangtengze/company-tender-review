@@ -5,8 +5,8 @@ import jakarta.validation.constraints.Min;
 
 public class IssueTrendQuery {
     private Long projectId;
-    @Min(7)
-    @Max(365)
+    @Min(value = 7, message = "天数最小为7")
+    @Max(value = 365, message = "天数最大为365")
     private Integer days;
     public void setDays(Integer days) {
         this.days = days;

@@ -7,21 +7,21 @@ import jakarta.validation.constraints.Size;
 public class UserQueryRequest {
     private Long orgId;
 
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "角色最小为1")
+    @Max(value = 4, message = "角色最大为4")
     private Integer role;
 
-    @Min(0)
-    @Max(1)
+    @Min(value = 0, message = "状态最小为0")
+    @Max(value = 1, message = "状态最大为1")
     private Integer status;
 
-    @Size(max = 50)
+    @Size(max = 50, message = "关键字长度不能超过50字符")
     private String keyword;
 
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page = 1;
 
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size = 20;
 
     public Long getOrgId() {

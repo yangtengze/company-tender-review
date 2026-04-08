@@ -10,33 +10,33 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class ContractCreateRequest {
-    @NotNull
-    @Positive
+    @NotNull(message = "文档ID不能为空")
+    @Positive(message = "文档ID必须为正数")
     private Long docId;
 
-    @NotNull
-    @Positive
+    @NotNull(message = "项目ID不能为空")
+    @Positive(message = "项目ID必须为正数")
     private Long projectId;
 
-    @Size(max = 128)
+    @Size(max = 128, message = "合同编号长度不能超过128字符")
     private String contractNo;
 
-    @DecimalMin("0.01")
+    @DecimalMin(value = "0.01", message = "合同金额不能小于0.01")
     private BigDecimal contractAmount;
 
     private LocalDate signDate;
 
-    @Size(max = 128)
+    @Size(max = 128, message = "甲方长度不能超过128字符")
     private String partyA;
 
-    @Size(max = 128)
+    @Size(max = 128, message = "乙方长度不能超过128字符")
     private String partyB;
 
     private LocalDate startDate;
 
     private LocalDate endDate;
 
-    @Min(0)
+    @Min(value = 0, message = "质保期最小为0")
     private Integer warrantyPeriod;
 
     private String paymentTerms;

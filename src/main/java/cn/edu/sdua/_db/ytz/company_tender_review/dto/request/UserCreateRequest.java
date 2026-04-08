@@ -10,33 +10,40 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public class UserCreateRequest {
-    @NotBlank
-    @Size(min = 4, max = 64)
-    @Pattern(regexp = "[a-zA-Z0-9_]+")
+
+    @NotBlank(message = "用户名不能为空")
+    @Size(min = 4, max = 64, message = "用户名长度为4-64字符")
+    @Pattern(regexp = "[a-zA-Z0-9_]+", message = "用户名只能包含字母、数字和下划线")
     private String username;
 
-    @NotBlank
-    @Size(min = 8, max = 32)
+
+    @NotBlank(message = "密码不能为空")
+    @Size(min = 8, max = 32, message = "密码长度为8-32字符")
     private String password;
 
-    @NotBlank
-    @Size(max = 64)
+
+    @NotBlank(message = "真实姓名不能为空")
+    @Size(max = 64, message = "真实姓名长度不能超过64字符")
     private String realName;
 
-    @Pattern(regexp = "1[3-9]\\d{9}")
+
+    @Pattern(regexp = "1[3-9]\\d{9}", message = "手机号格式不正确")
     private String phone;
 
-    @Email
-    @Size(max = 128)
+
+    @Email(message = "邮箱格式不正确")
+    @Size(max = 128, message = "邮箱长度不能超过128字符")
     private String email;
 
-    @NotNull
-    @Positive
+
+    @NotNull(message = "组织ID不能为空")
+    @Positive(message = "组织ID必须为正数")
     private Long orgId;
 
-    @NotNull
-    @Min(1)
-    @Max(4)
+
+    @NotNull(message = "角色不能为空")
+    @Min(value = 1, message = "角色最小为1")
+    @Max(value = 4, message = "角色最大为4")
     private Integer role;
 
     public String getUsername() {

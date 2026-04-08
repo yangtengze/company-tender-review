@@ -8,22 +8,22 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public class OrgCreateRequest {
-    @NotBlank
-    @Size(max = 128)
+    @NotBlank(message = "机构名称不能为空")
+    @Size(max = 128, message = "机构名称长度不能超过128字符")
     private String name;
 
-    @Size(max = 64)
+    @Size(max = 64, message = "机构编码长度不能超过64字符")
     private String code;
 
-    @NotNull
-    @Min(1)
-    @Max(4)
+    @NotNull(message = "机构类型不能为空")
+    @Min(value = 1, message = "机构类型最小为1")
+    @Max(value = 4, message = "机构类型最大为4")
     private Integer type;
 
-    @Positive
+    @Positive(message = "父机构ID必须为正数")
     private Long parentId;
 
-    @Size(max = 256)
+    @Size(max = 256, message = "地址长度不能超过256字符")
     private String address;
 
     public String getName() {

@@ -4,15 +4,15 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 public class NotificationQueryRequest {
-    @Min(0)
-    @Max(1)
+    @Min(value = 0, message = "已读状态最小为0")
+    @Max(value = 1, message = "已读状态最大为1")
     private Integer isRead;
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "通知类型最小为1")
+    @Max(value = 4, message = "通知类型最大为4")
     private Integer type;
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page;
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size;
     public Integer getIsRead() {
         return isRead;

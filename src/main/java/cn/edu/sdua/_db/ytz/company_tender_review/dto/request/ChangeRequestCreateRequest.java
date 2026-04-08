@@ -12,37 +12,37 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class ChangeRequestCreateRequest {
-    @NotNull
-    @Positive
+    @NotNull(message = "项目ID不能为空")
+    @Positive(message = "项目ID必须为正数")
     private Long projectId;
 
-    @NotBlank
-    @Size(max = 64)
+    @NotBlank(message = "变更编号不能为空")
+    @Size(max = 64, message = "变更编号长度不能超过64字符")
     private String changeNo;
 
-    @NotNull
-    @Min(1)
-    @Max(5)
+    @NotNull(message = "变更类型不能为空")
+    @Min(value = 1, message = "变更类型最小为1")
+    @Max(value = 5, message = "变更类型最大为5")
     private Integer changeType;
 
-    @Min(1)
-    @Max(5)
+    @Min(value = 1, message = "变更原因最小为1")
+    @Max(value = 5, message = "变更原因最大为5")
     private Integer changeReason;
 
     private String reasonDesc;
 
-    @NotBlank
+    @NotBlank(message = "变更说明不能为空")
     private String changeDesc;
 
-    @DecimalMin("0")
+    @DecimalMin(value = "0", message = "原始金额不能为负数")
     private BigDecimal originalAmount;
 
-    @NotNull
+    @NotNull(message = "变更金额不能为空")
     private BigDecimal changeAmount;
 
     private LocalDate applyDate;
 
-    @Positive
+    @Positive(message = "申请机构ID必须为正数")
     private Long applyOrgId;
 
     public Long getProjectId() { return projectId; }

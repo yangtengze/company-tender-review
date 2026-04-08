@@ -9,12 +9,12 @@ import java.time.LocalDateTime;
 public class ReviewTaskQueryRequest {
     private Long projectId;
 
-    @Min(1)
-    @Max(2)
+    @Min(value = 1, message = "任务类型最小为1")
+    @Max(value = 2, message = "任务类型最大为2")
     private Integer taskType;
 
-    @Min(1)
-    @Max(5)
+    @Min(value = 1, message = "状态最小为1")
+    @Max(value = 5, message = "状态最大为5")
     private Integer status;
 
     private Long assigneeId;
@@ -25,10 +25,10 @@ public class ReviewTaskQueryRequest {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime dateTo;
 
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page = 1;
 
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size = 20;
 
     public Long getProjectId() { return projectId; }

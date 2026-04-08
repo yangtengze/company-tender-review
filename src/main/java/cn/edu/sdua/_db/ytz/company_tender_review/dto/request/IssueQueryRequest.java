@@ -6,18 +6,18 @@ import jakarta.validation.constraints.Min;
 public class IssueQueryRequest {
     private Long projectId;
     private Long resultId;
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "严重度最小为1")
+    @Max(value = 4, message = "严重度最大为4")
     private Integer severity;
-    @Min(1)
-    @Max(6)
+    @Min(value = 1, message = "问题类型最小为1")
+    @Max(value = 6, message = "问题类型最大为6")
     private Integer issueType;
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "状态最小为1")
+    @Max(value = 4, message = "状态最大为4")
     private Integer status;
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page;
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size;
     public Integer getIssueType() {
         return issueType;

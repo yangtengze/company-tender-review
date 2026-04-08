@@ -4,12 +4,12 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 
 public class OrgQueryRequest {
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "机构类型最小为1")
+    @Max(value = 4, message = "机构类型最大为4")
     private Integer type;
 
-    @Min(0)
-    @Max(1)
+    @Min(value = 0, message = "状态最小为0")
+    @Max(value = 1, message = "状态最大为1")
     private Integer status = 1;
 
     private Boolean tree = false;

@@ -7,25 +7,31 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UserUpdateRequest {
-    @Size(max = 64)
+
+    @Size(max = 64, message = "真实姓名长度不能超过64字符")
     private String realName;
 
-    @Pattern(regexp = "1[3-9]\\d{9}")
+
+    @Pattern(regexp = "1[3-9]\\d{9}", message = "手机号格式不正确")
     private String phone;
 
-    @Email
-    @Size(max = 128)
+
+    @Email(message = "邮箱格式不正确")
+    @Size(max = 128, message = "邮箱长度不能超过128字符")
     private String email;
 
-    @Min(1)
-    @Max(4)
+
+    @Min(value = 1, message = "角色最小为1")
+    @Max(value = 4, message = "角色最大为4")
     private Integer role;
 
-    @Min(0)
-    @Max(1)
+
+    @Min(value = 0, message = "状态最小为0")
+    @Max(value = 1, message = "状态最大为1")
     private Integer status;
 
-    @Size(max = 512)
+
+    @Size(max = 512, message = "头像链接长度不能超过512字符")
     private String avatarUrl;
 
     public String getRealName() {

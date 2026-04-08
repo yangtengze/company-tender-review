@@ -7,10 +7,10 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Size;
 
 public class PlatformVerifyRequest {
-    @URL
-    @Size(max = 512)
+    @URL(message = "平台链接格式不正确")
+    @Size(max = 512, message = "平台链接长度不能超过512字符")
     private String url;
-    @Size(max = 128)
+    @Size(max = 128, message = "平台名称长度不能超过128字符")
     private String name;
     @AssertTrue(message = "url与name至少传一个")
     public boolean isValid() {

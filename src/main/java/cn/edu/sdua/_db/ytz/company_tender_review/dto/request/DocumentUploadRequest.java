@@ -10,25 +10,25 @@ import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 
 public class DocumentUploadRequest {
-    @NotNull
-    @Positive
+    @NotNull(message = "项目ID不能为空")
+    @Positive(message = "项目ID必须为正数")
     private Long projectId;
 
-    @NotNull
-    @Min(1)
-    @Max(99)
+    @NotNull(message = "文档类型不能为空")
+    @Min(value = 1, message = "文档类型最小为1")
+    @Max(value = 99, message = "文档类型最大为99")
     private Integer docType;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate issueDate;
 
-    @Size(max = 128)
+    @Size(max = 128, message = "发布者长度不能超过128字符")
     private String issuer;
 
-    @Size(max = 32)
+    @Size(max = 32, message = "版本长度不能超过32字符")
     private String version;
 
-    @Size(max = 512)
+    @Size(max = 512, message = "备注长度不能超过512字符")
     private String remark;
 
     public Long getProjectId() {

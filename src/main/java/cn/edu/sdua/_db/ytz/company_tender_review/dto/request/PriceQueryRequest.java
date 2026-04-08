@@ -7,22 +7,22 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 public class PriceQueryRequest {
-    @Size(max = 64)
+    @Size(max = 64, message = "物品编码长度不能超过64字符")
     private String itemCode;
-    @Size(max = 100)
+    @Size(max = 100, message = "关键字长度不能超过100字符")
     private String keyword;
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "类别最小为1")
+    @Max(value = 4, message = "类别最大为4")
     private Integer category;
-    @Size(max = 64)
+    @Size(max = 64, message = "地区长度不能超过64字符")
     private String region;
     @DateTimeFormat
     private String priceDateFrom;
     @DateTimeFormat
     private String priceDateTo;
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page;
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size;
     public Integer getCategory() {
         return category;

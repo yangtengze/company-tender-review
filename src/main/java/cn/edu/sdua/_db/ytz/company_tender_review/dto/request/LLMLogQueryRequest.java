@@ -8,18 +8,18 @@ import jakarta.validation.constraints.Size;
 
 public class LLMLogQueryRequest {
     private Long taskId;
-    @Size(max = 128)
+    @Size(max = 128, message = "模型名称长度不能超过128字符")
     private String modelName;
-    @Min(1)
-    @Max(3)
+    @Min(value = 1, message = "状态最小为1")
+    @Max(value = 3, message = "状态最大为3")
     private Integer status;
     @DateTimeFormat
     private String dateFrom;
     @DateTimeFormat
     private String dateTo;
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page;
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size;
     public String getDateFrom() {
         return dateFrom;

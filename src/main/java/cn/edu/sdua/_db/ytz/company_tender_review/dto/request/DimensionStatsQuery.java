@@ -7,8 +7,8 @@ import jakarta.validation.constraints.Min;
 
 public class DimensionStatsQuery {
     private Long projectId;
-    @Min(1)
-    @Max(2)
+    @Min(value = 1, message = "任务类型最小为1")
+    @Max(value = 2, message = "任务类型最大为2")
     private Integer taskType;
     @DateTimeFormat
     private String dateFrom;

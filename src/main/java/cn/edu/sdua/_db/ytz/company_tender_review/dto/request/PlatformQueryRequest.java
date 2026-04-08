@@ -5,13 +5,13 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 public class PlatformQueryRequest {
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "平台等级最小为1")
+    @Max(value = 4, message = "平台等级最大为4")
     private Integer level;
-    @Size(max = 64)
+    @Size(max = 64, message = "区域长度不能超过64字符")
     private String region;
-    @Min(0)
-    @Max(1)
+    @Min(value = 0, message = "是否认证最小为0")
+    @Max(value = 1, message = "是否认证最大为1")
     private Integer isApproved;
     public Integer getIsApproved() {
         return isApproved;

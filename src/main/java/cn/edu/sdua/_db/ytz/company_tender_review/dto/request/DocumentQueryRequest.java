@@ -7,25 +7,25 @@ import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public class DocumentQueryRequest {
-    @NotNull
-    @Positive
+    @NotNull(message = "项目ID不能为空")
+    @Positive(message = "项目ID必须为正数")
     private Long projectId;
 
-    @Min(1)
-    @Max(99)
+    @Min(value = 1, message = "文档类型最小为1")
+    @Max(value = 99, message = "文档类型最大为99")
     private Integer docType;
 
-    @Min(0)
-    @Max(3)
+    @Min(value = 0, message = "解析状态最小为0")
+    @Max(value = 3, message = "解析状态最大为3")
     private Integer parseStatus;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "关键字长度不能超过100字符")
     private String keyword;
 
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page = 1;
 
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size = 20;
 
     public Long getProjectId() {

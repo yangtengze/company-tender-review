@@ -5,20 +5,20 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 public class CaseQueryRequest {
-    @Min(1)
-    @Max(4)
+    @Min(value = 1, message = "案例类型最小为1")
+    @Max(value = 4, message = "案例类型最大为4")
     private Integer caseType;
-    @Min(1)
-    @Max(6)
+    @Min(value = 1, message = "问题类型最小为1")
+    @Max(value = 6, message = "问题类型最大为6")
     private Integer issueType;
-    @Min(1)
-    @Max(5)
+    @Min(value = 1, message = "项目类型最小为1")
+    @Max(value = 5, message = "项目类型最大为5")
     private Integer projectType;
-    @Size(max = 100)
+    @Size(max = 100, message = "关键字长度不能超过100字符")
     private String keyword;
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page;
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size;
     
     public Integer getCaseType() {

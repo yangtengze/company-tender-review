@@ -8,17 +8,17 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 
 public class ProjectQueryRequest {
-    @Min(1)
-    @Max(5)
+    @Min(value = 1, message = "状态最小为1")
+    @Max(value = 5, message = "状态最大为5")
     private Integer status;
 
-    @Min(1)
-    @Max(5)
+    @Min(value = 1, message = "项目类型最小为1")
+    @Max(value = 5, message = "项目类型最大为5")
     private Integer projectType;
 
     private Long buildOrgId;
 
-    @Size(max = 100)
+    @Size(max = 100, message = "关键字长度不能超过100字符")
     private String keyword;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
@@ -27,10 +27,10 @@ public class ProjectQueryRequest {
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate plannedStartTo;
 
-    @Min(1)
+    @Min(value = 1, message = "页码最小为1")
     private Integer page = 1;
 
-    @Max(100)
+    @Max(value = 100, message = "每页最大为100条")
     private Integer size = 20;
 
     public Integer getStatus() { return status; }

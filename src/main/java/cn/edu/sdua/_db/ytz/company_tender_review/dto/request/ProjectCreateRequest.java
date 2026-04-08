@@ -12,32 +12,32 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class ProjectCreateRequest {
-    @NotBlank
-    @Size(max = 64)
+    @NotBlank(message = "项目编号不能为空")
+    @Size(max = 64, message = "项目编号长度不能超过64字符")
     private String projectNo;
-    @NotBlank
-    @Size(max = 256)
+    @NotBlank(message = "项目名称不能为空")
+    @Size(max = 256, message = "项目名称长度不能超过256字符")
     private String projectName;
-    @NotNull @Min(1) @Max(5)
+    @NotNull(message = "项目类型不能为空") @Min(value = 1, message = "项目类型最小为1") @Max(value = 5, message = "项目类型最大为5")
     private Integer projectType;
-    @NotNull @Positive
+    @NotNull(message = "建设单位ID不能为空") @Positive(message = "建设单位ID必须为正数")
     private Long buildOrgId;
-    @Positive
+    @Positive(message = "承包商ID必须为正数")
     private Long contractorId;
-    @Positive
+    @Positive(message = "监理单位ID必须为正数")
     private Long supervisorId;
-    @DecimalMin("0.01")
+    @DecimalMin(value = "0.01", message = "总投资不能小于0.01")
     private BigDecimal totalInvestment;
-    @DecimalMin("0.01")
+    @DecimalMin(value = "0.01", message = "合同金额不能小于0.01")
     private BigDecimal contractAmount;
-    @Size(max = 256)
+    @Size(max = 256, message = "地址长度不能超过256字符")
     private String location;
-    @Size(max = 128)
+    @Size(max = 128, message = "批准文号长度不能超过128字符")
     private String approvalNo;
     private LocalDate approvalDate;
     private LocalDate plannedStart;
     private LocalDate plannedEnd;
-    @Size(max = 2000)
+    @Size(max = 2000, message = "描述长度不能超过2000字符")
     private String description;
     public String getProjectNo() { return projectNo; }
     public void setProjectNo(String projectNo) { this.projectNo = projectNo; }

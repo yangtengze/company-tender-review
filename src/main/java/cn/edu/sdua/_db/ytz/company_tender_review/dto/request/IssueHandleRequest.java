@@ -6,11 +6,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public class IssueHandleRequest {
-    @NotNull
-    @Min(1)
-    @Max(4)
+    @NotNull(message = "状态不能为空")
+    @Min(value = 1, message = "状态最小为1")
+    @Max(value = 4, message = "状态最大为4")
     private Integer status;
-    @Size(max=2000)
+    @Size(max=2000, message = "处理说明长度不能超过2000字符")
     private String handleNote;
     public String getHandleNote() {
         return handleNote;

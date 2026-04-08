@@ -6,11 +6,11 @@ import jakarta.validation.constraints.Size;
 public class ChangePasswordRequest {
     private String oldPassword;
 
-    @NotBlank
-    @Size(min = 8, max = 32)
+    @NotBlank(message = "新密码不能为空")
+    @Size(min = 8, max = 32, message = "新密码长度为8-32字符")
     private String newPassword;
 
-    @NotBlank
+    @NotBlank(message = "请确认新密码")
     private String confirmPassword;
 
     public String getOldPassword() {
