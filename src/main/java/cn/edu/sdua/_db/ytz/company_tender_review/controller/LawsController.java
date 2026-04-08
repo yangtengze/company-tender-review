@@ -35,36 +35,21 @@ public class LawsController {
     @Operation(summary = "全文检索法规库")
     @GetMapping
     public R<List<LawListItem>> list(@Valid LawQueryRequest request) {
-        try {
-            Long total = lawsRepository.count(request);
-            List<LawListItem> data = lawsRepository.list(request);
-            return R.okPage(data, total, request.getPage(), request.getSize());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Long total = lawsRepository.count(request);
+        List<LawListItem> data = lawsRepository.list(request);
+        return R.okPage(data, total, request.getPage(), request.getSize());
     }
     @Operation(summary = "录入新法规全文")
     @PostMapping
     public R<LawDetailResponse> insert(@Valid @RequestBody LawCreateRequest request) {
-        try {
-            Long id = lawsRepository.insert(request);
-            return R.ok(lawsRepository.findDetail(id));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Long id = lawsRepository.insert(request);
+        return R.ok(lawsRepository.findDetail(id));
     }
     @Operation(summary = "获取法规细粒度条款")
     @GetMapping("/{lawId}/clauses")
     public R<List<LawClause>> query(@PathVariable("lawId") Long lawId,
                                     @Valid ClauseQueryRequest request) {
-        try {
-            List<LawClause> data = lawsRepository.query(lawId, request);
-            return R.ok(data);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        List<LawClause> data = lawsRepository.query(lawId, request);
+        return R.ok(data);
     }
 }

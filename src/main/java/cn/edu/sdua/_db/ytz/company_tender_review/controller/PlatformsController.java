@@ -33,21 +33,11 @@ public class PlatformsController {
     @Operation(summary = "查询招标平台列表")
     @GetMapping
     public R<List<PlatformItem>> list(@Valid PlatformQueryRequest request) {
-        try {
-            return R.ok(platformsRepository.list(request));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return R.ok(platformsRepository.list(request));
     }
     @Operation(summary = "根据 URL 或名称核验是否合规平台（供维度 11 实时调用）")
     @PatchMapping("/verify")
     public R<PlatformVerifyResult> verify(@Valid @RequestBody PlatformVerifyRequest request) {
-        try {
-            return R.ok(platformsRepository.verify(request));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return R.ok(platformsRepository.verify(request));
     }
 }

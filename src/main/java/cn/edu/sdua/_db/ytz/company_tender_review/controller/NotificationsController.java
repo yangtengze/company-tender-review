@@ -35,40 +35,25 @@ public class NotificationsController {
     @Operation(summary = "获取当前用户通知列表")
     @GetMapping
     public R<List<NotificationItem>> list(@Valid NotificationQueryRequest request) {
-        try {
-            Long total = notificationsRepository.count(request);
-            List<NotificationItem> data = notificationsRepository.list(request);
-            return R.okPage(data, total, request.getPage(), request.getSize());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Long total = notificationsRepository.count(request);
+        List<NotificationItem> data = notificationsRepository.list(request);
+        return R.okPage(data, total, request.getPage(), request.getSize());
     }
     
     @Operation(summary = "将单条通知标记为已读")
     @PatchMapping("/{id}/read")
     public R<Void> read(@PathVariable("id") Long id) {
-        try {
-            notificationsRepository.read(id);
-            return R.ok(null);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        notificationsRepository.read(id);
+        return R.ok(null);
     }
     @Operation(summary = "将当前用户所有未读通知标记为已读")
     @PatchMapping("/read-all")
     public R<Void> readAll(@RequestHeader(value = "Authorization", required = false) String authorization) {
-        try {
-            if (authorization == null || !authorization.startsWith("Bearer ")) {
-                return R.fail(401, "Invalid authorization header(Bearer )");
-            }
-            Long authId = jwtTokenService.parseAccessUserId(authorization);
-            notificationsRepository.readAll(authId);
-            return R.ok(null);
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            return R.fail(401, "Invalid authorization header(Bearer )");
         }
+        Long authId = jwtTokenService.parseAccessUserId(authorization);
+        notificationsRepository.readAll(authId);
+        return R.ok(null);
     }
 }

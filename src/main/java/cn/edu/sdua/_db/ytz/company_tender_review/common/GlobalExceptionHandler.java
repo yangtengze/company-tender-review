@@ -1,5 +1,6 @@
 package cn.edu.sdua._db.ytz.company_tender_review.common;
 
+import lombok.extern.slf4j.Slf4j;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.stream.Collectors;
 // 全局异常处理 GlobalExceptionHandler：统一返回业务错误码（如参数校验失败、请求体格式错误等）
 
-
+@Slf4j
 @RestControllerAdvice // 组合注解，相当于 @ControllerAdvice + @ResponseBody，
 public class GlobalExceptionHandler {
 
@@ -40,6 +41,7 @@ public class GlobalExceptionHandler {
     // 通用异常
     @ExceptionHandler(Exception.class)
     public R<Void> handleGeneral(Exception ex) {
+        log.error("Unexpected error occurred", ex);
         return R.fail(5000, "internal server error");
     }
 }

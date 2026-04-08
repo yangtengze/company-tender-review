@@ -31,23 +31,13 @@ public class LLMLogsController {
     @Operation(summary = "查询大模型调用日志")
     @GetMapping
     public R<List<LLMLogItem>> list(@Valid LLMLogQueryRequest request) {
-        try {
-            Long total = llmLogsRepository.count(request);
-            List<LLMLogItem> data = llmLogsRepository.list(request);
-            return R.okPage(data, total, request.getPage(), request.getSize());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Long total = llmLogsRepository.count(request);
+        List<LLMLogItem> data = llmLogsRepository.list(request);
+        return R.okPage(data, total, request.getPage(), request.getSize());
     }
     @Operation(summary = "按模型统计 Token 消耗/延迟/失败率")
     @GetMapping("/summary")
     public R<List<LLMLogSummary>> summary(@Valid LLMLogSummaryQuery request) {
-        try {
-            return R.ok(llmLogsRepository.summary(request));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return R.ok(llmLogsRepository.summary(request));
     }
 }

@@ -34,31 +34,16 @@ public class DashboardController {
     @Operation(summary = "首页大屏总览数据")
     @GetMapping("/overview")
     public R<DashboardOverviewResponse> overview(@Valid DashboardOverviewQuery request) {
-        try {
-            return R.ok(dashboardRepository.overview(request));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return R.ok(dashboardRepository.overview(request));
     }
     @Operation(summary = "按审查维度统计合规率（雷达图数据源）")
     @GetMapping("/dimension-stats")
     public R<List<DimensionStatItem>> stats(@Valid DimensionStatsQuery request) {
-        try {
-            return R.ok(dashboardRepository.stats(request));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return R.ok(dashboardRepository.stats(request));
     }
     @Operation(summary = "按日统计问题趋势（折线图数据源）")
     @GetMapping("/issue-trend")
     public R<List<TrendDataPoint>> trend(@Valid IssueTrendQuery request) {
-        try {
-            return R.ok(dashboardRepository.trend(request));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return R.ok(dashboardRepository.trend(request));
     }
 }

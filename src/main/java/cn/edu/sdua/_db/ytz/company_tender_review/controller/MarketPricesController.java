@@ -35,33 +35,18 @@ public class MarketPricesController {
     @Operation(summary = "查询市场价格")
     @GetMapping
     public R<List<MarketPriceItem>> list(@Valid PriceQueryRequest request) {
-        try {
-            Long total = marketPricesRepository.count(request);
-            List<MarketPriceItem> data = marketPricesRepository.list(request);
-            return R.okPage(data, total, request.getPage(), request.getSize());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Long total = marketPricesRepository.count(request);
+        List<MarketPriceItem> data = marketPricesRepository.list(request);
+        return R.okPage(data, total, request.getPage(), request.getSize());
     }
     @Operation(summary = "批量导入市场价格，最多 1000 条")
     @PostMapping("/batch")
     public R<BatchImportResult> insert(@Valid @RequestBody List<MarketPriceCreateRequest> requests) {
-        try {
-            return R.ok(marketPricesRepository.insert(requests));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return R.ok(marketPricesRepository.insert(requests));
     }
     @Operation(summary = "查询物料近 N 月价格时序（变更经济性图表数据源）")
     @GetMapping("/compare")
     public R<List<PriceTrendItem>> compare(@Valid PriceCompareRequest request) {
-        try {
-            return R.ok(marketPricesRepository.compare(request));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        return R.ok(marketPricesRepository.compare(request));
     }
 }

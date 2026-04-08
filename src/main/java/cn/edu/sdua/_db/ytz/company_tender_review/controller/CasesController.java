@@ -33,24 +33,14 @@ public class CasesController {
     @Operation(summary = "全文检索历史案例")
     @GetMapping
     public R<List<CaseListItem>> list(@Valid CaseQueryRequest request) {
-        try {
-            Long total = casesRepository.count(request);
-            List<CaseListItem> data = casesRepository.list(request);
-            return R.okPage(data, total, request.getPage(), request.getSize());
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Long total = casesRepository.count(request);
+        List<CaseListItem> data = casesRepository.list(request);
+        return R.okPage(data, total, request.getPage(), request.getSize());
     }
     @Operation(summary = "录入历史案例")
     @PostMapping
     public R<CaseDetailResponse> insert(@Valid @RequestBody CaseCreateRequest request) {
-        try {
-            Long id = casesRepository.insert(request);
-            return R.ok(casesRepository.findDetail(id));
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        }
+        Long id = casesRepository.insert(request);
+        return R.ok(casesRepository.findDetail(id));
     }
 }
