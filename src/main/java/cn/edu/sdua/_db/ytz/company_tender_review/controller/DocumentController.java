@@ -1,8 +1,10 @@
 package cn.edu.sdua._db.ytz.company_tender_review.controller;
 
 import cn.edu.sdua._db.ytz.company_tender_review.common.R;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ChunkQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentUploadRequest;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentChunkNode;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentDetailResponse;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.ExtractResultResponse;
 import cn.edu.sdua._db.ytz.company_tender_review.repository.DocumentRepository;
@@ -11,6 +13,9 @@ import cn.edu.sdua._db.ytz.company_tender_review.service.security.JwtTokenServic
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+
+import java.util.List;
+
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -64,6 +69,13 @@ public class DocumentController {
     @GetMapping("/{id}/extract")
     public R<ExtractResultResponse> extract(@PathVariable("id") Long docId) {
         return R.ok(documentExtractService.extract(docId));
+    }
+
+    @Operation(summary = "获取文档的层次化切分结果")
+    @GetMapping("/{id}/chunks")
+    public R<List<DocumentChunkNode>> chunks(@PathVariable("id") Long docId,
+                                            @Valid ChunkQueryRequest request) {
+        return R.ok(documentRepository.chunks(docId, request));
     }
 }
 

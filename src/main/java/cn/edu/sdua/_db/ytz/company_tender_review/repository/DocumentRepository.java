@@ -1,8 +1,11 @@
 package cn.edu.sdua._db.ytz.company_tender_review.repository;
 
+import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ChunkQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentUploadRequest;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentChunkNode;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentDetailResponse;
+
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -10,13 +13,19 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-
+import java.util.stream.Collectors;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
@@ -27,6 +36,7 @@ public class DocumentRepository {
     private static final DateTimeFormatter ISO_LOCAL_DATE = DateTimeFormatter.ISO_LOCAL_DATE;
 
     private final JdbcTemplate jdbcTemplate;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final RowMapper<DocumentDetailResponse> MAPPER = (rs, rowNum) -> {
         DocumentDetailResponse d = new DocumentDetailResponse();
@@ -182,6 +192,75 @@ public class DocumentRepository {
                 parseStatus, docId);
     }
 
+    public List<DocumentChunkNode> chunks(Long docId, ChunkQueryRequest request) {
+        StringBuilder sql = new StringBuilder("""
+                select
+                    id, parent_id,
+                    chunk_type, chunk_level, chunk_index,
+                    content, token_count, metadata_json as metadata
+                    from document_chunk
+                where doc_id = ?
+                """);
+        if (request.getTree()) {
+            sql.append(" order by parent_id, chunk_index");
+        } else {
+            sql.append(" order by chunk_index");
+        }
+        List<DocumentChunkNode> rows = jdbcTemplate.query(sql.toString(), (rs, rowNum) -> {
+            DocumentChunkNode d = new DocumentChunkNode();
+            d.setId(rs.getLong("id"));
+            d.setDocId(docId);
+            d.setParentId(rs.getLong("parent_id"));
+            d.setChunkType(rs.getString("chunk_type"));
+            d.setChunkLevel(rs.getInt("chunk_level"));
+            d.setChunkIndex(rs.getInt("chunk_index"));
+            d.setContent(rs.getString("content"));
+            d.setTokenCount(rs.getInt("token_count"));
+            String metadataJson = rs.getString("metadata");
+            if (metadataJson != null && !metadataJson.isEmpty()) {
+                try {
+                    Map<String, Object> metadata = objectMapper.readValue(metadataJson, Map.class);
+                    d.setMetadata(metadata);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    d.setMetadata(Collections.emptyMap());
+                }
+            } else {
+                d.setMetadata(Collections.emptyMap());
+            }
+            d.setChildren(new ArrayList<>());
+            return d;
+        }, docId);
+        if (request.getTree()) {
+            return buildTree(rows);
+        } else {
+            rows.forEach(node -> node.setChildren(null));
+            return rows;
+        }
+    }
+
+    private List<DocumentChunkNode> buildTree(List<DocumentChunkNode> rows) {
+
+        Map<Long, List<DocumentChunkNode>> childrenMap = rows.stream()
+                .filter(n -> n.getParentId() != null && n.getParentId() != 0)
+                .collect(Collectors.groupingBy(DocumentChunkNode::getId));
+        
+        List<DocumentChunkNode> roots = new ArrayList<>();
+        
+        for (DocumentChunkNode row : rows) {
+            // 挂载子节点
+            List<DocumentChunkNode> children = childrenMap.getOrDefault(row.getId(), Collections.emptyList());
+            row.setChildren(children);
+            
+            // 收集根节点
+            if (row.getParentId() == null || row.getParentId() == 0) {
+                roots.add(row);
+            }
+        }
+        
+        return roots;
+    }
+    
     private static void appendFilters(StringBuilder sql, List<Object> args, DocumentQueryRequest request) {
         if (request.getDocType() != null) {
             sql.append(" and d.doc_type = ?");
@@ -246,5 +325,6 @@ public class DocumentRepository {
             default -> "未知";
         };
     }
+
 }
 

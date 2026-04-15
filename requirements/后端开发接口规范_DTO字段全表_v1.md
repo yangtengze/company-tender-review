@@ -488,7 +488,7 @@ ReqDTO: DocumentQueryRequest   RespDTO: Page<DocumentDetailResponse>
 |------|-----------|------|----------|------|
 | `projectId` | `Long` | **Y** | `@NotNull @Positive` | 必填，项目 ID |
 | `docType` | `Integer` | N | `@Min(1) @Max(99)` | 文件类型过滤 |
-| `parseStatus` | `Integer` | N | `@Min(0) @Max(3)` | 解析状态过滤 |
+| `parseStatus` | `Integer` | N | `@Min(0) @Max(5)` | 解析状态过滤 |
 | `keyword` | `String` | N | `@Size(max=100)` | 文件名模糊搜索 |
 | `page` | `Integer` | N | `@Min(1)` | 页码 |
 | `size` | `Integer` | N | `@Max(100)` | 每页条数 |
@@ -514,6 +514,33 @@ RespDTO: ExtractResultResponse
 | `updatedAt` | `String` | 最后更新时间 |
 
 ---
+### 5.4 `GET /api/documents/{id}/chunks` — 获取文档的 RAG 分块列表（支持树形）
+
+```
+@Operation(summary="获取文档的层次化切分结果")  @Tag("Document")
+ReqDTO: ChunkQueryRequest   RespDTO: List<DocumentChunkNode>
+```
+
+**Query Params — `ChunkQueryRequest`**
+
+| 字段 | Java 类型 | 必填 | 校验注解 | 说明 |
+|------|-----------|------|----------|------|
+| `tree` | `Boolean` | N | — | true=返回树形结构（基于 parentId），false=返回平铺列表（按 chunkIndex 排序） |
+
+**Response Data — `List<DocumentChunkNode>`**
+
+| 字段 | Java 类型 | 说明 |
+|------|-----------|------|
+| `id` | `Long` | 块 ID |
+| `docId` | `Long` | 文档 ID |
+| `parentId` | `Long` | 父节点 ID |
+| `chunkType` | `String` | 类型：`title` / `paragraph` / `table` / `list` |
+| `chunkLevel` | `Integer` | 层级深度 |
+| `chunkIndex` | `Integer` | 文档内顺序索引 |
+| `content` | `String` | 块文本内容 |
+| `tokenCount` | `Integer` | Token 数量 |
+| `metadata` | `Map<String,Object>` | 附加元数据 |
+| `children` | `List<DocumentChunkNode>` | `tree=true` 时返回子块列表 |
 
 ## 模块六  招标公告扩展 `/api/bid-announcements`
 

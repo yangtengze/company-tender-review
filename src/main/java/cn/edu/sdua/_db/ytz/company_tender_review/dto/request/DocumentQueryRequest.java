@@ -16,7 +16,7 @@ public class DocumentQueryRequest {
     private Integer docType;
 
     @Min(value = 0, message = "解析状态最小为0")
-    @Max(value = 3, message = "解析状态最大为3")
+    @Max(value = 5, message = "解析状态最大为5")
     private Integer parseStatus;
 
     @Size(max = 100, message = "关键字长度不能超过100字符")

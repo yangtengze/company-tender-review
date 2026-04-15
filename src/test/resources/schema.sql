@@ -38,6 +38,7 @@ drop table if exists market_price;
 drop table if exists public_platform;
 drop table if exists llm_call_log;
 drop table if exists doc_extract_cache;
+drop table if exists document_chunk;
 drop table if exists sys_operation_log;
 drop table if exists sys_notification;
 
@@ -160,8 +161,7 @@ CREATE TABLE `document` (
     `version`       VARCHAR(32)     DEFAULT '1.0'           COMMENT '版本号',
     `issue_date`    DATE                                    COMMENT '文件出具日期',
     `issuer`        VARCHAR(128)                            COMMENT '出具单位/人',
-    `parse_status`  TINYINT         DEFAULT 0
-                    COMMENT '解析状态: 0=待解析 1=解析中 2=解析完成 3=解析失败',
+    `parse_status`  TINYINT  DEFAULT 0 COMMENT '状态: 0=待解析 1=解析中 2=解析完成(待切分) 3=解析失败 4=切分与向量化中 5=RAG入库完成',
     `parse_text`    LONGTEXT                                COMMENT '解析后的纯文本内容',
     `uploader_id`   BIGINT UNSIGNED                         COMMENT '上传人ID → sys_user',
     `remark`        VARCHAR(512)                            COMMENT '备注',
@@ -615,7 +615,30 @@ CREATE TABLE `doc_extract_cache` (
         REFERENCES `document` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文件结构化提取缓存';
 
+-- 7.3 文档 RAG 切分块表（依赖 document；与 document 1:N）
+-- 用于支持结构感知与层次化切分策略
+CREATE TABLE `document_chunk` (
+    `id`             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `doc_id`         BIGINT UNSIGNED NOT NULL            COMMENT '关联文件ID → document',
+    `parent_id`      BIGINT UNSIGNED DEFAULT NULL        COMMENT '父块ID（用于层次化，指向本表id）',
+    `chunk_type`     VARCHAR(32) NOT NULL                COMMENT '节点类型: title(标题), paragraph(段落), table(表格), list(列表)',
+    `chunk_level`    TINYINT DEFAULT 0                   COMMENT '层级深度（如 1=一级标题，2=二级标题，99=正文段落）',
+    `chunk_index`    INT NOT NULL                        COMMENT '文档内的全局顺序索引',
+    `content`        TEXT NOT NULL                       COMMENT '该块的纯文本内容',
+    `token_count`    INT                                 COMMENT '消耗的 Token 数量',
+    `vector_id`      VARCHAR(128)                        COMMENT '关联向量数据库中的 Vector ID（若使用外部向量库）',
+    `metadata_json`  JSON                                COMMENT '扩展元数据（如表格的行列信息、原文档页码等）',
+    `created_at`     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
+    INDEX `idx_doc_id`    (`doc_id`),
+    INDEX `idx_parent_id` (`parent_id`),
+    INDEX `idx_vector_id` (`vector_id`),
+
+    CONSTRAINT `fk_chunk_doc` FOREIGN KEY (`doc_id`)
+        REFERENCES `document` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT `fk_chunk_parent` FOREIGN KEY (`parent_id`)
+        REFERENCES `document_chunk` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='文档 RAG 切分块表';
 -- ============================================================
 -- 模块八：系统辅助层（依赖 sys_user）
 -- ============================================================
@@ -703,5 +726,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- law_clause.law_id                → law_regulation.id       CASCADE
 -- llm_call_log.task_id             → review_task.id          SET NULL
 -- doc_extract_cache.doc_id         → document.id             CASCADE
+-- document_chunk.doc_id            → document.id             CASCADE
+-- document_chunk.parent_id         → document_chunk.id       RESTRICT（自引用）
 -- sys_operation_log.user_id        → sys_user.id             RESTRICT
 -- sys_notification.user_id         → sys_user.id             CASCADE

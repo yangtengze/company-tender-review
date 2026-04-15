@@ -118,6 +118,11 @@ class DocumentControllerTest {
                 Integer.class, docId
         );
         assertThat(countAfterSecond).isEqualTo(1);
+
+        mockMvc.perform(get("/api/documents/" + docId + "/chunks")
+                        .param("Tree", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0));
     }
 }
 
