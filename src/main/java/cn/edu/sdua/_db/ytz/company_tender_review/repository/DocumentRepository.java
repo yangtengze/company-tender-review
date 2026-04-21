@@ -5,6 +5,7 @@ import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentQueryReques
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentUploadRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentChunkNode;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentDetailResponse;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentChunkCreateRequest;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -12,11 +13,9 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -29,6 +28,7 @@ import java.util.stream.Collectors;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+
 
 @Repository
 public class DocumentRepository {
@@ -239,6 +239,55 @@ public class DocumentRepository {
         }
     }
 
+    public void batchInsertChunks(List<DocumentChunkCreateRequest> requests) {
+        String sql = "INSERT INTO document_chunk " +
+                "(doc_id, parent_id, chunk_type, chunk_level, chunk_index, content, token_count, vector_id, metadata_json) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
+            @Override
+            public void setValues(PreparedStatement ps, int i) throws java.sql.SQLException {
+                DocumentChunkCreateRequest req = requests.get(i);
+                ps.setLong(1, req.getDocId());
+                if (req.getParentId() != null) {
+                    ps.setLong(2, req.getParentId());
+                } else {
+                    ps.setNull(2, java.sql.Types.BIGINT);
+                }
+                ps.setString(3, req.getChunkType());
+                if (req.getChunkLevel() != null) {
+                    ps.setInt(4, req.getChunkLevel());
+                } else {
+                    ps.setInt(4, 0);
+                }
+                ps.setInt(5, req.getChunkIndex());
+                ps.setString(6, req.getContent());
+                if (req.getTokenCount() != null) {
+                    ps.setInt(7, req.getTokenCount());
+                } else {
+                    ps.setNull(7, java.sql.Types.INTEGER);
+                }
+                ps.setString(8, req.getVectorId());
+                try {
+                    if (req.getMetadata() != null) {
+                        ps.setString(9, objectMapper.writeValueAsString(req.getMetadata()));
+                    } else {
+                        ps.setNull(9, java.sql.Types.VARCHAR);
+                    }
+                } catch (Exception e) {
+                    try {
+                        ps.setNull(9, java.sql.Types.VARCHAR);
+                    } catch (java.sql.SQLException ignored) {}
+                }
+            }
+
+            @Override
+            public int getBatchSize() {
+                return requests.size();
+            }
+        });
+    }
+    
     private List<DocumentChunkNode> buildTree(List<DocumentChunkNode> rows) {
 
         Map<Long, List<DocumentChunkNode>> childrenMap = rows.stream()

@@ -2,6 +2,7 @@ package cn.edu.sdua._db.ytz.company_tender_review.controller;
 
 import cn.edu.sdua._db.ytz.company_tender_review.common.R;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ChunkQueryRequest;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentChunkCreateRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentUploadRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentChunkNode;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,6 +71,15 @@ public class DocumentController {
     @GetMapping("/{id}/extract")
     public R<ExtractResultResponse> extract(@PathVariable("id") Long docId) {
         return R.ok(documentExtractService.extract(docId));
+    }
+
+    @Operation(summary = "批量写入包含 Vector ID 的 ChunkEntity 到 MySQL")
+    @PostMapping("/chunks/batch")
+    public R<Void> batchInsertChunks(@RequestHeader("Authorization") String authorization,
+                                    @RequestBody @Valid List<DocumentChunkCreateRequest> requests) {
+        Long uploaderId = jwtTokenService.parseAccessUserId(authorization);
+        documentRepository.batchInsertChunks(requests);
+        return R.ok(null);
     }
 
     @Operation(summary = "获取文档的层次化切分结果")
