@@ -6,6 +6,7 @@ import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentUploadReque
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentChunkNode;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentDetailResponse;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentChunkCreateRequest;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -13,7 +14,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.security.MessageDigest;
@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
+import org.springframework.transaction.annotation.Transactional;
 
 
 @Repository
@@ -210,7 +212,7 @@ public class DocumentRepository {
             DocumentChunkNode d = new DocumentChunkNode();
             d.setId(rs.getLong("id"));
             d.setDocId(docId);
-            d.setParentId(rs.getLong("parent_id"));
+            d.setParentId(rs.getObject("parent_id", Long.class));
             d.setChunkType(rs.getString("chunk_type"));
             d.setChunkLevel(rs.getInt("chunk_level"));
             d.setChunkIndex(rs.getInt("chunk_index"));
@@ -219,7 +221,7 @@ public class DocumentRepository {
             String metadataJson = rs.getString("metadata");
             if (metadataJson != null && !metadataJson.isEmpty()) {
                 try {
-                    Map<String, Object> metadata = objectMapper.readValue(metadataJson, Map.class);
+                    Map<String, Object> metadata = objectMapper.readValue(metadataJson, new TypeReference<Map<String, Object>>() {});
                     d.setMetadata(metadata);
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -239,21 +241,26 @@ public class DocumentRepository {
         }
     }
 
+    @Transactional
     public void batchInsertChunks(List<DocumentChunkCreateRequest> requests) {
-        String sql = "INSERT INTO document_chunk " +
+        if (requests == null || requests.isEmpty()) {
+            return;
+        }
+
+        String insertSql = "INSERT INTO document_chunk " +
                 "(doc_id, parent_id, chunk_type, chunk_level, chunk_index, content, token_count, vector_id, metadata_json) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
-        jdbcTemplate.batchUpdate(sql, new BatchPreparedStatementSetter() {
-            @Override
-            public void setValues(PreparedStatement ps, int i) throws java.sql.SQLException {
-                DocumentChunkCreateRequest req = requests.get(i);
+
+        List<Long> insertedDbIds = new ArrayList<>(requests.size());
+        Map<Long, Long> tempIdToDbId = new HashMap<>();
+        // 第一步：全部先以 parent_id = NULL 插入，拿到真实自增ID
+        for (DocumentChunkCreateRequest req : requests) {
+            KeyHolder keyHolder = new GeneratedKeyHolder();
+            jdbcTemplate.update(con -> {
+                PreparedStatement ps = con.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS);
                 ps.setLong(1, req.getDocId());
-                if (req.getParentId() != null) {
-                    ps.setLong(2, req.getParentId());
-                } else {
-                    ps.setNull(2, java.sql.Types.BIGINT);
-                }
+                ps.setNull(2, java.sql.Types.BIGINT);
                 ps.setString(3, req.getChunkType());
                 if (req.getChunkLevel() != null) {
                     ps.setInt(4, req.getChunkLevel());
@@ -275,24 +282,51 @@ public class DocumentRepository {
                         ps.setNull(9, java.sql.Types.VARCHAR);
                     }
                 } catch (Exception e) {
-                    try {
-                        ps.setNull(9, java.sql.Types.VARCHAR);
-                    } catch (java.sql.SQLException ignored) {}
+                    ps.setNull(9, java.sql.Types.VARCHAR);
                 }
+                return ps;
+            }, keyHolder);
+
+            Number key = keyHolder.getKey();
+            if (key == null) {
+                throw new IllegalStateException("failed to get chunk insert id");
+            }
+            long dbId = key.longValue();
+            insertedDbIds.add(dbId);
+
+            if (req.getClientChunkId() != null) {
+                tempIdToDbId.put(req.getClientChunkId(), dbId);
+            }
+        }
+
+        String updateParentSql = "UPDATE document_chunk SET parent_id = ? WHERE id = ?";
+        // 第二步：回填 parent_id
+        for (int i = 0; i < requests.size(); i++) {
+            DocumentChunkCreateRequest req = requests.get(i);
+            Long currentDbId = insertedDbIds.get(i);
+
+            Long resolvedParentId = null;
+            if (req.getClientParentChunkId() != null) {
+                resolvedParentId = tempIdToDbId.get(req.getClientParentChunkId());
+                if (resolvedParentId == null) {
+                    throw new IllegalArgumentException("invalid clientParentChunkId: " + req.getClientParentChunkId());
+                }
+            } else if (req.getParentId() != null && req.getParentId() > 0) {
+                // 兼容：允许直接传已有 document_chunk.id 作为父节点
+                resolvedParentId = req.getParentId();
             }
 
-            @Override
-            public int getBatchSize() {
-                return requests.size();
+            if (resolvedParentId != null) {
+                jdbcTemplate.update(updateParentSql, resolvedParentId, currentDbId);
             }
-        });
+        }
     }
     
     private List<DocumentChunkNode> buildTree(List<DocumentChunkNode> rows) {
 
         Map<Long, List<DocumentChunkNode>> childrenMap = rows.stream()
                 .filter(n -> n.getParentId() != null && n.getParentId() != 0)
-                .collect(Collectors.groupingBy(DocumentChunkNode::getId));
+                .collect(Collectors.groupingBy(DocumentChunkNode::getParentId));
         
         List<DocumentChunkNode> roots = new ArrayList<>();
         

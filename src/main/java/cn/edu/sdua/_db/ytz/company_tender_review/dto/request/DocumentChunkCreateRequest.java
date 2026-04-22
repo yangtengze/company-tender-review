@@ -8,6 +8,12 @@ import java.util.Map;
 @Schema(description = "文档切块创建请求")
 public class DocumentChunkCreateRequest {
 
+    @Schema(description = "客户端临时块ID（用于批量入库后回填 parentId）")
+    private Long clientChunkId;
+
+    @Schema(description = "客户端临时父块ID（用于批量入库后回填 parentId）")
+    private Long clientParentChunkId;
+
     @Schema(description = "文档ID")
     @NotNull
     private Long docId;
@@ -38,6 +44,12 @@ public class DocumentChunkCreateRequest {
 
     @Schema(description = "元数据")
     private Map<String, Object> metadata;
+
+    public Long getClientChunkId() { return clientChunkId; }
+    public void setClientChunkId(Long clientChunkId) { this.clientChunkId = clientChunkId; }
+
+    public Long getClientParentChunkId() { return clientParentChunkId; }
+    public void setClientParentChunkId(Long clientParentChunkId) { this.clientParentChunkId = clientParentChunkId; }
 
     public Long getDocId() { return docId; }
     public void setDocId(Long docId) { this.docId = docId; }
