@@ -31,6 +31,15 @@ public class DocumentUploadRequest {
     @Size(max = 512, message = "备注长度不能超过512字符")
     private String remark;
 
+    private String storageRootPath = "D:/java_app/";
+
+    public void setStorageRootPath(String storageRootPath) {
+        this.storageRootPath = storageRootPath;
+    }
+    public String getStorageRootPath() {
+        return storageRootPath;
+    }
+    
     public Long getProjectId() {
         return projectId;
     }

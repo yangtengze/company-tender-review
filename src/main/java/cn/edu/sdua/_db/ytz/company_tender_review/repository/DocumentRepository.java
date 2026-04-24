@@ -3,8 +3,10 @@ package cn.edu.sdua._db.ytz.company_tender_review.repository;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ChunkQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentUploadRequest;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.response.ChunkRow;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentChunkNode;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentDetailResponse;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.response.ExpandedChunkContextResponse;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentChunkCreateRequest;
 import com.fasterxml.jackson.core.type.TypeReference;
 
@@ -16,6 +18,11 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -24,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.sql.Date;
@@ -82,9 +90,16 @@ public class DocumentRepository {
             versionValue = "1.0";
         }
 
-        byte[] bytes = file.getBytes();
-        String md5Value = md5Hex(bytes);
+        String md5Value;
+        try (InputStream is = file.getInputStream()) {
+            md5Value = md5Hex(is);
+        }
+
         String storagePathValue = "uploads/" + UUID.randomUUID() + "/" + originalNameValue;
+
+        Path destPath = Paths.get(request.getStorageRootPath(), storagePathValue); 
+        Files.createDirectories(destPath.getParent()); 
+        file.transferTo(destPath.toFile()); 
 
         final String originalName = originalNameValue;
         final String ext = extValue;
@@ -175,7 +190,6 @@ public class DocumentRepository {
     }
 
     public DocumentMeta findDocMetaById(Long docId) {
-        // 仅用于扩展表写入前的校验：doc_type 与 doc.project_id
         List<DocumentMeta> rows = jdbcTemplate.query("""
                 select doc_type, project_id
                   from document
@@ -239,6 +253,49 @@ public class DocumentRepository {
             rows.forEach(node -> node.setChildren(null));
             return rows;
         }
+    }
+
+    public ExpandedChunkContextResponse expandContextByVectorId(String vectorId) {
+        ChunkRow hit = findChunkByVectorId(vectorId);
+        if (hit == null) {
+            throw new IllegalArgumentException("chunk not found by vectorId");
+        }
+
+        ChunkRow title = resolveTitleChunk(hit);
+        List<ChunkRow> sectionRows = fetchSectionRows(hit, title);
+
+        ExpandedChunkContextResponse response = new ExpandedChunkContextResponse();
+        response.setDocId(hit.getDocId());
+        response.setVectorId(vectorId);
+        response.setHitChunkId(hit.getId());
+        response.setHitChunkIndex(hit.getChunkIndex());
+
+        if (title != null) {
+            response.setTitleChunkId(title.getId());
+            response.setTitle(title.getContent());
+            response.setTitleLevel(title.getChunkLevel());
+        }
+
+        if (!sectionRows.isEmpty()) {
+            response.setSectionStartIndex(sectionRows.get(0).getChunkIndex());
+            response.setSectionEndIndex(sectionRows.get(sectionRows.size() - 1).getChunkIndex());
+        }
+
+        List<DocumentChunkNode> nodes = sectionRows.stream()
+                .map(this::toChunkNode)
+                .toList();
+        nodes.forEach(n -> n.setChildren(null));
+        response.setChunks(nodes);
+
+        String contextText = sectionRows.stream()
+                .map(ChunkRow::getContent)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.joining("\n\n"));
+        response.setContextText(contextText);
+
+        return response;
     }
 
     @Transactional
@@ -321,7 +378,24 @@ public class DocumentRepository {
             }
         }
     }
-    
+
+    private static String md5Hex(InputStream inputStream) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("MD5");
+        byte[] buffer = new byte[8192]; // 8KB 的缓冲区，内存占用极小
+        
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            digest.update(buffer, 0, bytesRead); // 一点一点喂给 MD5 算
+        }
+        
+        byte[] digestBytes = digest.digest();
+        StringBuilder sb = new StringBuilder();
+        for (byte b : digestBytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
+
     private List<DocumentChunkNode> buildTree(List<DocumentChunkNode> rows) {
 
         Map<Long, List<DocumentChunkNode>> childrenMap = rows.stream()
@@ -342,6 +416,142 @@ public class DocumentRepository {
         }
         
         return roots;
+    }
+
+    private ChunkRow findChunkByVectorId(String vectorId) {
+        List<ChunkRow> rows = jdbcTemplate.query("""
+                select id, doc_id, parent_id,
+                       chunk_type, chunk_level, chunk_index,
+                       content, token_count, metadata_json as metadata
+                  from document_chunk
+                 where vector_id = ?
+                 order by id desc
+                 limit 1
+                """, this::mapChunkRow, vectorId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    private ChunkRow findChunkById(Long id) {
+        if (id == null || id <= 0) {
+            return null;
+        }
+        List<ChunkRow> rows = jdbcTemplate.query("""
+                select id, doc_id, parent_id,
+                       chunk_type, chunk_level, chunk_index,
+                       content, token_count, metadata_json as metadata
+                  from document_chunk
+                 where id = ?
+                 limit 1
+                """, this::mapChunkRow, id);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    private ChunkRow findNearestTitleChunk(Long docId, Integer chunkIndex) {
+        List<ChunkRow> rows = jdbcTemplate.query("""
+                select id, doc_id, parent_id,
+                       chunk_type, chunk_level, chunk_index,
+                       content, token_count, metadata_json as metadata
+                  from document_chunk
+                 where doc_id = ?
+                   and lower(chunk_type) = 'title'
+                   and chunk_index <= ?
+                 order by chunk_index desc
+                 limit 1
+                """, this::mapChunkRow, docId, chunkIndex);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    private ChunkRow resolveTitleChunk(ChunkRow hit) {
+        ChunkRow cursor = hit;
+        while (cursor != null) {
+            if ("title".equalsIgnoreCase(cursor.getChunkType())) {
+                return cursor;
+            }
+            Long parentId = cursor.getParentId();
+            if (parentId == null || parentId == 0) {
+                break;
+            }
+            cursor = findChunkById(parentId);
+        }
+        return findNearestTitleChunk(hit.getDocId(), hit.getChunkIndex());
+    }
+
+    private List<ChunkRow> fetchSectionRows(ChunkRow hit, ChunkRow title) {
+        if (title == null) {
+            return List.of(hit);
+        }
+
+        Integer nextBoundary = jdbcTemplate.queryForObject("""
+                select min(chunk_index)
+                  from document_chunk
+                 where doc_id = ?
+                   and lower(chunk_type) = 'title'
+                   and chunk_index > ?
+                   and chunk_level <= ?
+                """, Integer.class, title.getDocId(), title.getChunkIndex(), title.getChunkLevel());
+
+        if (nextBoundary == null) {
+            return jdbcTemplate.query("""
+                    select id, doc_id, parent_id,
+                           chunk_type, chunk_level, chunk_index,
+                           content, token_count, metadata_json as metadata
+                      from document_chunk
+                     where doc_id = ?
+                       and chunk_index >= ?
+                     order by chunk_index
+                    """, this::mapChunkRow, title.getDocId(), title.getChunkIndex());
+        }
+
+        return jdbcTemplate.query("""
+                select id, doc_id, parent_id,
+                       chunk_type, chunk_level, chunk_index,
+                       content, token_count, metadata_json as metadata
+                  from document_chunk
+                 where doc_id = ?
+                   and chunk_index >= ?
+                   and chunk_index < ?
+                 order by chunk_index
+                """, this::mapChunkRow, title.getDocId(), title.getChunkIndex(), nextBoundary);
+    }
+
+    private ChunkRow mapChunkRow(java.sql.ResultSet rs, int rowNum) throws java.sql.SQLException {
+        ChunkRow row = new ChunkRow();
+        row.setId(rs.getLong("id"));
+        row.setDocId(rs.getLong("doc_id"));
+        row.setParentId(rs.getObject("parent_id", Long.class));
+        row.setChunkType(rs.getString("chunk_type"));
+        row.setChunkLevel(rs.getObject("chunk_level", Integer.class));
+        row.setChunkIndex(rs.getObject("chunk_index", Integer.class));
+        row.setContent(rs.getString("content"));
+        row.setTokenCount(rs.getObject("token_count", Integer.class));
+        row.setMetadata(parseMetadata(rs.getString("metadata")));
+        return row;
+    }
+
+    private DocumentChunkNode toChunkNode(ChunkRow row) {
+        DocumentChunkNode d = new DocumentChunkNode();
+        d.setId(row.getId());
+        d.setDocId(row.getDocId());
+        d.setParentId(row.getParentId());
+        d.setChunkType(row.getChunkType());
+        d.setChunkLevel(row.getChunkLevel());
+        d.setChunkIndex(row.getChunkIndex());
+        d.setContent(row.getContent());
+        d.setTokenCount(row.getTokenCount());
+        d.setMetadata(row.getMetadata());
+        return d;
+    }
+
+    private Map<String, Object> parseMetadata(String metadataJson) {
+        if (metadataJson == null || metadataJson.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        try {
+            return objectMapper.readValue(metadataJson, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyMap();
+        }
     }
     
     private static void appendFilters(StringBuilder sql, List<Object> args, DocumentQueryRequest request) {
@@ -371,22 +581,7 @@ public class DocumentRepository {
         if (idx < 0 || idx == fileName.length() - 1) return "";
         return fileName.substring(idx + 1).toLowerCase();
     }
-
-    private static String md5Hex(byte[] bytes) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            byte[] digestBytes = digest.digest(bytes);
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digestBytes) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (Exception ex) {
-            // MD5 always exists in JRE; this is just defensive.
-            throw new IllegalStateException("md5 calc failed", ex);
-        }
-    }
-
+    
     private static String docTypeName(Integer type) {
         return switch (type == null ? 0 : type) {
             case 1 -> "招标公告";

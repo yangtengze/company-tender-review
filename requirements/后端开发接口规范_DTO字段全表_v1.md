@@ -47,6 +47,12 @@ OpenAPI openAPI() {
 }
 ```
 
+### 实现状态约定（本版）
+
+- 以下接口字段以当前代码实现为准（Controller + DTO）。
+- 文中未特殊标记的接口均为**已实现**。
+- 未落地但保留的接口将显式标注为：**规划中**。
+
 ---
 
 ## 模块一  认证 `/api/auth`
@@ -542,6 +548,64 @@ ReqDTO: ChunkQueryRequest   RespDTO: List<DocumentChunkNode>
 | `metadata` | `Map<String,Object>` | 附加元数据 |
 | `children` | `List<DocumentChunkNode>` | `tree=true` 时返回子块列表 |
 
+---
+
+### 5.5 `POST /api/documents/chunks/batch` — 批量写入文档分块（含向量 ID）
+
+```
+@Operation(summary="批量写入包含 Vector ID 的 ChunkEntity 到 MySQL")  @Tag("Document")
+ReqDTO: List<DocumentChunkCreateRequest>
+```
+
+**Request Body — `List<DocumentChunkCreateRequest>`**
+
+| 字段 | Java 类型 | 必填 | 校验注解 | 说明 |
+|------|-----------|------|----------|------|
+| `clientChunkId` | `Long` | N | — | 客户端临时块 ID（用于回填 parentId） |
+| `clientParentChunkId` | `Long` | N | — | 客户端临时父块 ID |
+| `docId` | `Long` | **Y** | `@NotNull` | 文档 ID |
+| `parentId` | `Long` | N | — | 父块 ID |
+| `chunkType` | `String` | **Y** | `@NotBlank` | 分块类型 |
+| `chunkLevel` | `Integer` | N | — | 分块层级 |
+| `chunkIndex` | `Integer` | **Y** | `@NotNull` | 文档内顺序索引 |
+| `content` | `String` | **Y** | `@NotBlank` | 分块文本 |
+| `tokenCount` | `Integer` | N | — | Token 数 |
+| `vectorId` | `String` | N | — | 向量库 ID |
+| `metadata` | `Map<String,Object>` | N | — | 附加元数据 |
+
+> 响应体 `R<Void>`，成功时 `code=0`。
+
+---
+
+### 5.6 `GET /api/documents/chunks/context-expansion` — 向量命中块上下文扩展
+
+```
+@Operation(summary="根据 vectorId 扩展上下文，返回命中块所属完整章节")  @Tag("Document")
+ReqDTO: ContextExpandQueryRequest   RespDTO: ExpandedChunkContextResponse
+```
+
+**Query Params — `ContextExpandQueryRequest`**
+
+| 字段 | Java 类型 | 必填 | 校验注解 | 说明 |
+|------|-----------|------|----------|------|
+| `vectorId` | `String` | **Y** | `@NotBlank @Size(max=128)` | 向量库返回的 chunk 向量 ID |
+
+**Response Data — `ExpandedChunkContextResponse`**
+
+| 字段 | Java 类型 | 说明 |
+|------|-----------|------|
+| `docId` | `Long` | 文档 ID |
+| `vectorId` | `String` | 命中的向量 ID |
+| `hitChunkId` | `Long` | 命中块 ID |
+| `hitChunkIndex` | `Integer` | 命中块索引 |
+| `titleChunkId` | `Long` | 所属章节标题块 ID |
+| `title` | `String` | 章节标题 |
+| `titleLevel` | `Integer` | 标题层级 |
+| `sectionStartIndex` | `Integer` | 章节起始 chunkIndex |
+| `sectionEndIndex` | `Integer` | 章节结束 chunkIndex |
+| `contextText` | `String` | 聚合后的完整上下文文本 |
+| `chunks` | `List<DocumentChunkNode>` | 该章节下的分块列表 |
+
 ## 模块六  招标公告扩展 `/api/bid-announcements`
 
 > 与 document 1:1，`doc_id` FK CASCADE（document 删除则自动删除）。v2 新增 `updated_at`。
@@ -956,7 +1020,7 @@ ReqDTO: IssueHandleRequest   RespDTO: IssueDetailResponse
 
 ---
 
-### 11.3 `GET /api/review-issues/statistics` — 问题统计
+### 11.3 `GET /api/review-issues/statistic` — 问题统计（当前实现）
 
 ```
 @Operation(summary="按项目统计各级别问题数量")  @Tag("ReviewIssue")
@@ -980,6 +1044,12 @@ RespDTO: IssueStatsResponse
 | `ignored` | `Integer` | 已忽略 |
 | `bySeverity` | `List<SeverityCount>` | `[{severity, severityName, total, resolved}]` |
 | `byType` | `List<TypeCount>` | `[{issueType, typeName, total}]` |
+
+---
+
+### 11.4 `GET /api/review-issues/statistics` — 问题统计（规划中）
+
+> 说明：该路径为兼容别名，当前代码未实现；建议后续与 `statistic` 保持同参同返回。
 
 ---
 
@@ -1242,6 +1312,38 @@ ReqDTO: PlatformVerifyRequest   RespDTO: PlatformVerifyResult
 
 ---
 
+### 15.2 `GET /api/platforms` — 招标平台列表（当前实现）
+
+```
+@Operation(summary="查询招标平台列表")  @Tag("Platform")
+ReqDTO: PlatformQueryRequest   RespDTO: List<PlatformItem>
+```
+
+**Query Params — `PlatformQueryRequest`**
+
+| 字段 | Java 类型 | 必填 | 校验注解 | 说明 |
+|------|-----------|------|----------|------|
+| `level` | `Integer` | N | `@Min(1) @Max(4)` | 平台等级过滤 |
+| `region` | `String` | N | `@Size(max=64)` | 覆盖地区过滤 |
+| `isApproved` | `Integer` | N | `@Min(0) @Max(1)` | 合规状态过滤 |
+
+**Response Data — `List<PlatformItem>`**
+
+| 字段 | Java 类型 | 说明 |
+|------|-----------|------|
+| `id` | `Long` | 平台 ID |
+| `name` | `String` | 平台名称 |
+| `url` | `String` | 平台 URL |
+| `level` | `Integer` | 平台等级 |
+| `levelName` | `String` | 等级名称 |
+| `region` | `String` | 覆盖地区 |
+| `isApproved` | `Integer` | 1=合规 0=不合规 |
+| `remark` | `String` | 备注 |
+| `createdAt` | `String` | 创建时间 |
+| `updatedAt` | `String` | 更新时间 |
+
+---
+
 ## 模块十六  AI 调用日志 `/api/llm-logs`
 
 > `task_id` FK SET NULL（任务删除后日志保留）。只读接口，仅超管可访问。
@@ -1272,7 +1374,45 @@ RespDTO: List<LLMLogSummary>
 | `failedCount` | `Integer` | 失败次数 |
 | `failRate` | `Double` | 失败率（百分比） |
 | `avgLatencyMs` | `Double` | 平均延迟（ms） |
-| `p95LatencyMs` | `Double` | P95 延迟（ms） |
+| `p95LatencyMs` | `Double` | P95 延迟（ms，**规划中**，当前 DTO 未返回） |
+
+---
+
+### 16.2 `GET /api/llm-logs` — 调用日志列表（当前实现）
+
+```
+@Operation(summary="查询大模型调用日志")  @Tag("LLMLog")
+ReqDTO: LLMLogQueryRequest   RespDTO: Page<LLMLogItem>
+```
+
+**Query Params — `LLMLogQueryRequest`**
+
+| 字段 | Java 类型 | 必填 | 校验注解 | 说明 |
+|------|-----------|------|----------|------|
+| `taskId` | `Long` | N | — | 任务 ID 过滤 |
+| `modelName` | `String` | N | `@Size(max=128)` | 模型名称 |
+| `status` | `Integer` | N | `@Min(1) @Max(3)` | 调用状态 |
+| `dateFrom` | `String` | N | `@DateTimeFormat` | 起始时间 |
+| `dateTo` | `String` | N | `@DateTimeFormat` | 截止时间 |
+| `page` | `Integer` | N | `@Min(1)` | 页码 |
+| `size` | `Integer` | N | `@Max(100)` | 每页条数 |
+
+**Response Data — `Page<LLMLogItem>`**
+
+| 字段 | Java 类型 | 说明 |
+|------|-----------|------|
+| `id` | `Long` | 日志 ID |
+| `taskId` | `Long` | 关联任务 ID |
+| `callType` | `String` | 调用类型 |
+| `modelName` | `String` | 模型名称 |
+| `modelVersion` | `String` | 模型版本 |
+| `promptTokens` | `Integer` | Prompt Token |
+| `completionTokens` | `Integer` | Completion Token |
+| `totalTokens` | `Integer` | 总 Token |
+| `latencyMs` | `Integer` | 延迟（ms） |
+| `status` | `Integer` | 调用状态 |
+| `errorMsg` | `String` | 错误信息 |
+| `createdAt` | `String` | 创建时间 |
 
 ---
 
@@ -1316,6 +1456,14 @@ ReqDTO: NotificationQueryRequest   RespDTO: Page<NotificationItem>
 
 ```
 @Operation(summary="将当前用户所有未读通知标记为已读")  @Tag("Notification")
+```
+
+---
+
+### 17.3 `PATCH /api/notifications/{id}/read` — 单条已读（当前实现）
+
+```
+@Operation(summary="将单条通知标记为已读")  @Tag("Notification")
 ```
 
 ---
@@ -1404,6 +1552,29 @@ RespDTO: List<TrendDataPoint>
 | `total` | `Integer` | 当日新增问题数 |
 | `resolved` | `Integer` | 当日已整改数 |
 | `pending` | `Integer` | 当日新增待整改数 |
+
+---
+
+## 模块十九  AI 转发 `/api/ai`
+
+### 19.1 `POST /api/ai/prompt` — AI 对话转发（当前实现）
+
+```
+@Tag("AI Chat")
+ReqDTO: Map<String,Object>   RespDTO: Map<String,Object>
+```
+
+**Request Body — `Map<String,Object>`**
+
+| 字段 | Java 类型 | 必填 | 校验注解 | 说明 |
+|------|-----------|------|----------|------|
+| （动态） | `Map<String,Object>` | N | — | 原样透传至 Python 服务 `/api/ai/prompt` |
+
+**Response Data — `Map<String,Object>`**
+
+| 字段 | Java 类型 | 说明 |
+|------|-----------|------|
+| （动态） | `Map<String,Object>` | Python 服务返回结果原样包装在 `R.data` |
 
 ---
 

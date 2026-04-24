@@ -1,12 +1,14 @@
 package cn.edu.sdua._db.ytz.company_tender_review.controller;
 
 import cn.edu.sdua._db.ytz.company_tender_review.common.R;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ContextExpandQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ChunkQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentChunkCreateRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.DocumentUploadRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentChunkNode;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.DocumentDetailResponse;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.response.ExpandedChunkContextResponse;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.ExtractResultResponse;
 import cn.edu.sdua._db.ytz.company_tender_review.repository.DocumentRepository;
 import cn.edu.sdua._db.ytz.company_tender_review.service.DocumentExtractService;
@@ -15,7 +17,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.MediaType;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 @Validated
@@ -38,6 +43,8 @@ public class DocumentController {
     private final DocumentRepository documentRepository;
     private final DocumentExtractService documentExtractService;
     private final JwtTokenService jwtTokenService;
+    private final RestTemplate restTemplate = new RestTemplate();
+    private static final String PYTHON_AI_URL = "http://localhost:8000/api/ai/process_doc" ;
 
     public DocumentController(DocumentRepository documentRepository,
                                DocumentExtractService documentExtractService,
@@ -46,7 +53,6 @@ public class DocumentController {
         this.documentExtractService = documentExtractService;
         this.jwtTokenService = jwtTokenService;
     }
-
     @Operation(summary = "上传工程文件，解析异步进行")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public R<DocumentDetailResponse> upload(
@@ -56,7 +62,24 @@ public class DocumentController {
     ) throws Exception {
         Long uploaderId = jwtTokenService.parseAccessUserId(authorization);
         long docId = documentRepository.insertUpload(uploaderId, request, file);
-        return R.ok(documentRepository.findById(docId));
+        DocumentDetailResponse detail = documentRepository.findById(docId);
+        String absoluteFilePath = request.getStorageRootPath() + detail.getFilePath();
+
+        final long finalDocId = docId;
+        final String finalAbsPath = absoluteFilePath;
+        new Thread(() -> {
+            try {
+                Map<String, Object> pyReq = new HashMap<>();
+                pyReq.put("doc_id", finalDocId);
+                pyReq.put("file_path", finalAbsPath);
+                
+                restTemplate.postForObject(PYTHON_AI_URL, pyReq, Map.class);
+            } catch (Exception e) {
+                System.err.println("触发 Python 解析失败: " + e.getMessage());
+                // TODO: 可以在这里更新 document 表的 parse_status 为失败状态
+            }
+        }).start();
+        return R.ok(detail);
     }
 
     @Operation(summary = "查询项目文件列表")
@@ -77,7 +100,7 @@ public class DocumentController {
     @PostMapping("/chunks/batch")
     public R<Void> batchInsertChunks(@RequestHeader("Authorization") String authorization,
                                     @RequestBody @Valid List<DocumentChunkCreateRequest> requests) {
-        Long uploaderId = jwtTokenService.parseAccessUserId(authorization);
+        jwtTokenService.parseAccessUserId(authorization);
         documentRepository.batchInsertChunks(requests);
         return R.ok(null);
     }
@@ -87,6 +110,12 @@ public class DocumentController {
     public R<List<DocumentChunkNode>> chunks(@PathVariable("id") Long docId,
                                             @Valid ChunkQueryRequest request) {
         return R.ok(documentRepository.chunks(docId, request));
+    }
+
+    @Operation(summary = "根据 vectorId 扩展上下文，返回命中块所属完整章节")
+    @GetMapping("/chunks/context-expansion")
+    public R<ExpandedChunkContextResponse> expandContext(@Valid ContextExpandQueryRequest request) {
+        return R.ok(documentRepository.expandContextByVectorId(request.getVectorId()));
     }
 }
 
