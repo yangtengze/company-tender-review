@@ -1,16 +1,22 @@
 package cn.edu.sdua._db.ytz.company_tender_review.repository;
 
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ReviewResultQueryRequest;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ItemResultRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ReviewConfirmRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.ReviewResultDetailResponse;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.ReviewResultListItem;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Repository
 public class ReviewResultRepository {
@@ -153,6 +159,59 @@ public class ReviewResultRepository {
             throw new IllegalArgumentException("review result not found");
         }
         return findDetail(id);
+    }
+
+    public Long insertItemResult(ItemResultRequest req) {
+        Long resultId = getOrInitResultId(req.getTaskId());
+
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(con -> {
+            PreparedStatement ps = con.prepareStatement("""
+                    insert into review_item_result
+                        (result_id, task_id, check_dimension, dimension_name, verdict, confidence, detail, evidence, issue_desc, suggestion, created_at, updated_at)
+                    values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, now(), now())
+                    """, Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, resultId);
+            ps.setLong(1, req.getTaskId());
+            ps.setInt(2, req.getCheckDimension());
+            ps.setString(3, req.getDimensionName());
+            ps.setInt(4, req.getVerdict());
+            ps.setBigDecimal(5, req.getConfidence());
+            ps.setString(6, req.getDetail());
+            ps.setString(7, req.getEvidence());
+            ps.setString(8, req.getIssueDesc());
+            ps.setString(9, req.getSuggestion());
+            return ps;
+        }, keyHolder);
+        Long id = Objects.requireNonNull(keyHolder.getKey()).longValue();
+        return id;
+    }
+
+    private Long getOrInitResultId(Long taskId) {
+        Long existingId = jdbcTemplate.queryForObject(
+            "select id from review_result where task_id = ?", 
+            Long.class, taskId);
+        
+        if (existingId != null) {
+            return existingId;
+        }
+
+        // 没有则初始化占位记录
+        // 注意：review_result 表的 project_id 是 NOT NULL，需要从 review_task 关联查出来
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.update(con -> {
+            String sql = """
+                insert into review_result (task_id, project_id, overall_verdict, issue_count, created_at, updated_at)
+                select ?, project_id, 1, 0, now(), now() 
+                from review_task where id = ?
+                """;
+            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, taskId);
+            ps.setLong(2, taskId);
+            return ps;
+        }, keyHolder);
+
+        return keyHolder.getKey().longValue();
     }
 
     public byte[] export(long id, String format) {

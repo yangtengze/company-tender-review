@@ -98,9 +98,8 @@ public class DocumentController {
 
     @Operation(summary = "批量写入包含 Vector ID 的 ChunkEntity 到 MySQL")
     @PostMapping("/chunks/batch")
-    public R<Void> batchInsertChunks(@RequestHeader("Authorization") String authorization,
-                                    @RequestBody @Valid List<DocumentChunkCreateRequest> requests) {
-        jwtTokenService.parseAccessUserId(authorization);
+    public R<Void> batchInsertChunks(@RequestBody @Valid List<DocumentChunkCreateRequest> requests) {
+        // jwtTokenService.parseAccessUserId(authorization);
         documentRepository.batchInsertChunks(requests);
         return R.ok(null);
     }

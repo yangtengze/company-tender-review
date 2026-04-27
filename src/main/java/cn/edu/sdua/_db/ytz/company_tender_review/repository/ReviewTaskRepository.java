@@ -76,6 +76,58 @@ public class ReviewTaskRepository {
         return id;
     }
 
+    public ReviewTaskDetailResponse findTaskDetail(long taskId) {
+        ReviewTaskQueryRequest q = new ReviewTaskQueryRequest();
+        q.setPage(1);
+        q.setSize(1);
+        List<ReviewTaskDetailResponse> list = jdbcTemplate.query("""
+                select t.id, t.task_no, t.project_id, p.project_name, t.task_type, t.change_id,
+                       t.task_name, t.status, t.priority, t.assignee_id, u.real_name as assignee_name,
+                       t.start_at, t.end_at, t.duration_ms, t.created_at
+                  from review_task t
+                  left join project p on p.id = t.project_id
+                  left join sys_user u on u.id = t.assignee_id
+                 where t.id = ?
+                """, (rs, rowNum) -> {
+            ReviewTaskDetailResponse d = new ReviewTaskDetailResponse();
+            d.setId(rs.getLong("id"));
+            d.setTaskNo(rs.getString("task_no"));
+            d.setProjectId(rs.getLong("project_id"));
+            d.setProjectName(rs.getString("project_name"));
+            d.setTaskType((Integer) rs.getObject("task_type"));
+            d.setTaskTypeName(taskTypeName(d.getTaskType()));
+            d.setChangeId(rs.getObject("change_id", Long.class));
+            d.setTaskName(rs.getString("task_name"));
+            d.setStatus((Integer) rs.getObject("status"));
+            d.setStatusName(taskStatusName(d.getStatus()));
+            d.setPriority((Integer) rs.getObject("priority"));
+            d.setAssigneeId(rs.getObject("assignee_id", Long.class));
+            d.setAssigneeName(rs.getString("assignee_name"));
+            d.setStartAt(toIso(rs.getTimestamp("start_at")));
+            d.setEndAt(toIso(rs.getTimestamp("end_at")));
+            d.setDurationMs((Integer) rs.getObject("duration_ms"));
+            d.setCreatedAt(toIso(Objects.requireNonNull(rs.getTimestamp("created_at"))));
+            return d;
+        }, taskId);
+        if (list.isEmpty()) {
+            throw new IllegalArgumentException("review task not found");
+        }
+        ReviewTaskDetailResponse d = list.get(0);
+        d.setDocs(findTaskDocs(taskId));
+        return d;
+    }
+
+    public void updateStatusAndTime(Long id, Integer status) {
+        StringBuilder sql = new StringBuilder("""
+            update review_task set 
+                status = ?, 
+                start_at = IF(? = 2, NOW(), start_at), 
+                end_at = IF(? = 3, NOW(), end_at) 
+            where id = ?
+        """);
+        jdbcTemplate.update(sql.toString(), status, status, status, id);
+    }
+
     public long count(ReviewTaskQueryRequest q) {
         StringBuilder sql = new StringBuilder("select count(*) from review_task t where 1=1");
         List<Object> args = new ArrayList<>();
@@ -129,48 +181,7 @@ public class ReviewTaskRepository {
         }
         return rows;
     }
-
-    public ReviewTaskDetailResponse findTaskDetail(long taskId) {
-        ReviewTaskQueryRequest q = new ReviewTaskQueryRequest();
-        q.setPage(1);
-        q.setSize(1);
-        List<ReviewTaskDetailResponse> list = jdbcTemplate.query("""
-                select t.id, t.task_no, t.project_id, p.project_name, t.task_type, t.change_id,
-                       t.task_name, t.status, t.priority, t.assignee_id, u.real_name as assignee_name,
-                       t.start_at, t.end_at, t.duration_ms, t.created_at
-                  from review_task t
-                  left join project p on p.id = t.project_id
-                  left join sys_user u on u.id = t.assignee_id
-                 where t.id = ?
-                """, (rs, rowNum) -> {
-            ReviewTaskDetailResponse d = new ReviewTaskDetailResponse();
-            d.setId(rs.getLong("id"));
-            d.setTaskNo(rs.getString("task_no"));
-            d.setProjectId(rs.getLong("project_id"));
-            d.setProjectName(rs.getString("project_name"));
-            d.setTaskType((Integer) rs.getObject("task_type"));
-            d.setTaskTypeName(taskTypeName(d.getTaskType()));
-            d.setChangeId(rs.getObject("change_id", Long.class));
-            d.setTaskName(rs.getString("task_name"));
-            d.setStatus((Integer) rs.getObject("status"));
-            d.setStatusName(taskStatusName(d.getStatus()));
-            d.setPriority((Integer) rs.getObject("priority"));
-            d.setAssigneeId(rs.getObject("assignee_id", Long.class));
-            d.setAssigneeName(rs.getString("assignee_name"));
-            d.setStartAt(toIso(rs.getTimestamp("start_at")));
-            d.setEndAt(toIso(rs.getTimestamp("end_at")));
-            d.setDurationMs((Integer) rs.getObject("duration_ms"));
-            d.setCreatedAt(toIso(Objects.requireNonNull(rs.getTimestamp("created_at"))));
-            return d;
-        }, taskId);
-        if (list.isEmpty()) {
-            throw new IllegalArgumentException("review task not found");
-        }
-        ReviewTaskDetailResponse d = list.get(0);
-        d.setDocs(findTaskDocs(taskId));
-        return d;
-    }
-
+    
     public ReviewFullResultResponse findFullResult(long taskId) {
         List<ReviewFullResultResponse> main = jdbcTemplate.query("""
                 select t.id as task_id, t.task_name, t.project_id, p.project_name,
@@ -446,5 +457,7 @@ public class ReviewTaskRepository {
             default -> "未知";
         };
     }
+
+
 }
 

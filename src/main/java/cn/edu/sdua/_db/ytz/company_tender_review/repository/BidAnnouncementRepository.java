@@ -105,6 +105,40 @@ public class BidAnnouncementRepository {
         return toResponse(row);
     }
 
+    public BidAnnouncementResponse findResponseByDocId(Long docId) {
+        List<BidAnnouncementRow> rows = jdbcTemplate.query("""
+                select id, doc_id, project_id, bid_no, bid_type,
+                       publish_date, deadline_date, bid_open_date, public_notice_days,
+                       platform_name, platform_url, is_public_platform,
+                       qualification_req, performance_req, estimated_price,
+                       updated_at
+                  from doc_bid_announcement
+                 where doc_id = ?
+                """, (rs, rowNum) -> new BidAnnouncementRow(
+                        rs.getLong("id"),
+                        rs.getLong("doc_id"),
+                        rs.getLong("project_id"),
+                        rs.getString("bid_no"),
+                        rs.getObject("bid_type", Integer.class),
+                        rs.getTimestamp("publish_date") == null ? null : rs.getTimestamp("publish_date").toLocalDateTime(),
+                        rs.getTimestamp("deadline_date") == null ? null : rs.getTimestamp("deadline_date").toLocalDateTime(),
+                        rs.getTimestamp("bid_open_date") == null ? null : rs.getTimestamp("bid_open_date").toLocalDateTime(),
+                        rs.getObject("public_notice_days", Integer.class),
+                        rs.getString("platform_name"),
+                        rs.getString("platform_url"),
+                        rs.getObject("is_public_platform", Integer.class),
+                        rs.getString("qualification_req"),
+                        rs.getString("performance_req"),
+                        rs.getBigDecimal("estimated_price"),
+                        rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toLocalDateTime()
+                ), docId);
+        if (rows.isEmpty()) {
+            throw new IllegalArgumentException("bid announcement not found");
+        }
+        BidAnnouncementRow row = rows.get(0);
+        return toResponse(row);
+    }
+
     private BidAnnouncementResponse toResponse(BidAnnouncementRow row) {
         BidAnnouncementResponse resp = new BidAnnouncementResponse();
         resp.setId(row.id());

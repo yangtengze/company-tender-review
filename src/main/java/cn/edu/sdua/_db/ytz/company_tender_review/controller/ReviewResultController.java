@@ -1,6 +1,7 @@
 package cn.edu.sdua._db.ytz.company_tender_review.controller;
 
 import cn.edu.sdua._db.ytz.company_tender_review.common.R;
+import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ItemResultRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ReviewConfirmRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.request.ReviewResultQueryRequest;
 import cn.edu.sdua._db.ytz.company_tender_review.dto.response.ReviewResultDetailResponse;
@@ -16,6 +17,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -67,6 +69,17 @@ public class ReviewResultController {
         ReviewResultDetailResponse updated = reviewResultRepository.review(id, request, reviewerId);
         return R.ok(updated);
     }
+
+    @Operation(summary="写入单维度审查结果")
+    @PostMapping("/items/internal-save")
+    public R<Long> saveItemResult(@RequestBody ItemResultRequest req) {
+        Long itemId = reviewResultRepository.insertItemResult(req);
+        return R.ok(itemId);
+    }
+    
+    // @Operation(summary = "更新总体审查结论")
+    // @PatchMapping("/internal-update-overall")
+    // public R<Long> 
 
     @Operation(summary = "导出审查报告（PDF 或 Word）")
     @GetMapping("/{id}/export")

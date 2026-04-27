@@ -117,6 +117,47 @@ public class ContractRepository {
         }
         return rows.get(0);
     }
+    
+    public ContractResponse findResponseByDocId(Long docId) {
+        List<ContractResponse> rows = jdbcTemplate.query("""
+                select id, doc_id, project_id,
+                       contract_no, contract_amount, sign_date,
+                       party_a, party_b,
+                       start_date, end_date,
+                       warranty_period, payment_terms, penalty_terms,
+                       created_at, updated_at
+                  from doc_contract
+                 where doc_id = ?
+                """, (rs, rowNum) -> {
+            ContractResponse r = new ContractResponse();
+            r.setId(rs.getLong("id"));
+            r.setDocId(rs.getLong("doc_id"));
+            r.setProjectId(rs.getLong("project_id"));
+            r.setContractNo(rs.getString("contract_no"));
+            r.setContractAmount(rs.getBigDecimal("contract_amount"));
+            Date sd = rs.getDate("sign_date");
+            r.setSignDate(sd == null ? null : sd.toLocalDate().format(ISO_LOCAL_DATE));
+            r.setPartyA(rs.getString("party_a"));
+            r.setPartyB(rs.getString("party_b"));
+            Date st = rs.getDate("start_date");
+            r.setStartDate(st == null ? null : st.toLocalDate().format(ISO_LOCAL_DATE));
+            Date ed = rs.getDate("end_date");
+            r.setEndDate(ed == null ? null : ed.toLocalDate().format(ISO_LOCAL_DATE));
+            r.setWarrantyPeriod((Integer) rs.getObject("warranty_period"));
+            r.setPaymentTerms(rs.getString("payment_terms"));
+            r.setPenaltyTerms(rs.getString("penalty_terms"));
+            LocalDateTime ct = rs.getTimestamp("created_at") == null ? null : rs.getTimestamp("created_at").toLocalDateTime();
+            r.setCreatedAt(ct == null ? null : ct.format(ISO_LOCAL_DATE_TIME));
+            LocalDateTime ut = rs.getTimestamp("updated_at") == null ? null : rs.getTimestamp("updated_at").toLocalDateTime();
+            r.setUpdatedAt(ut == null ? null : ut.format(ISO_LOCAL_DATE_TIME));
+            return r;
+        }, docId);
+
+        if (rows.isEmpty()) {
+            throw new IllegalArgumentException("contract not found");
+        }
+        return rows.get(0);    
+    }
 
     private static void setLocalDate(PreparedStatement ps, int idx, LocalDate date) throws java.sql.SQLException {
         if (date == null) ps.setNull(idx, java.sql.Types.DATE);
